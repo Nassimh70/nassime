@@ -34,11 +34,11 @@ defmodule BackendWeb.Auth.Guardian do
   def authenticate_user(email, password) do
     case Accounts.get_utilisateur_by_email(email) do
       nil ->
-        Bcrypt.no_user_verify()
+        Backend.Auth.PasswordManager.no_user_verify()
         {:error, :invalid_credentials, message: "Email ou mot de passe incorrect"}
 
       utilisateur ->
-        if Bcrypt.verify_pass(password, utilisateur.mot_de_pass_utilisateurs) do
+        if Backend.Auth.PasswordManager.verify_pass(password, utilisateur.mot_de_pass_utilisateurs) do
           generate_token(utilisateur, :access)
         else
           {:error, :invalid_credentials, message: "Email ou mot de passe incorrect"}

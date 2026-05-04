@@ -64,7 +64,7 @@ const routes = [
       { path: 'grades', name: 'prof-grades', component: GradeManagement },
       { path: 'announcements', name: 'prof-announcements', component: AnnoncesPageProf },
       { path: 'tickets', name: 'prof-tickets', component: Tickets },
-      { path: 'settings', name: 'prof-settings', component: Profile },
+      { path: 'Profile', name: 'prof-settings', component: Profile },
       { path: 'help', name: 'prof-help', component: Aide },
     ],
   },

@@ -236,6 +236,60 @@ async function loadProfile() {
   return null
 }
 
+// update profile with new data
+async function updateProfile(updateData) {
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/accounts/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ account: updateData }),
+    })
+
+    if (!res.ok) {
+      let errJson = {}
+      try {
+        errJson = await res.json()
+      } catch (e) {
+        // ignore parse error
+      }
+      let message = ''
+      if (errJson.message) message = errJson.message
+      else if (errJson.error) message = errJson.error
+      else if (errJson.errors) {
+        if (Array.isArray(errJson.errors)) message = errJson.errors.join(', ')
+        else {
+          const parts = []
+          for (const k in errJson.errors) {
+            const v = errJson.errors[k]
+            if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`)
+            else parts.push(`${k}: ${v}`)
+          }
+          message = parts.join('; ')
+        }
+      } else if (res.status === 0) message = 'Erreur de connexion au serveur'
+      else message = `Erreur serveur (${res.status})`
+      const err = new Error(message)
+      err.status = res.status
+      err.body = errJson
+      throw err
+    }
+
+    // Reload profile after successful update
+    await loadProfile()
+    return true
+  } catch (e) {
+    // Handle network errors (Failed to fetch)
+    if (e instanceof TypeError && e.message === 'Failed to fetch') {
+      throw new Error('Erreur de connexion au serveur. Vérifiez que le serveur est accessible.')
+    }
+    throw e
+  }
+}
+
 export function useAuth() {
-  return { user, isDelegate, canPublish, setUser, logout, login, register, toggleRole, loadProfile }
+  return { user, isDelegate, canPublish, setUser, logout, login, register, toggleRole, loadProfile, updateProfile }
 }

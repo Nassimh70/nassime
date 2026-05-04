@@ -19,69 +19,88 @@
       </button>
     </div>
 
-    <!-- Table Card -->
-    <div class="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700">
-      <div class="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-100 dark:border-slate-700">
-        <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
-          Tikets soumis par les étudiants
-        </h3>
-      </div>
+    <!-- Ticket Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+      <div
+        v-for="r in filtered"
+        :key="r.id"
+        @click="openDetail(r)"
+        class="group relative bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 flex flex-col h-full cursor-pointer hover:border-blue-300 dark:hover:border-blue-600/50"
+      >
+        <!-- Header: ticket number + title -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="min-w-0 pr-2">
+            <p class="text-[10px] px-2 py-0.5 inline-flex rounded-md font-mono font-bold bg-slate-100 dark:bg-slate-900 text-muted-foreground ring-1 ring-slate-200 dark:ring-slate-700">Ticket #{{ r.id }}</p>
+            <h3 class="text-base font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mt-2 line-clamp-2">
+              {{ r.objet }}
+            </h3>
+          </div>
+          <span
+            class="text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider ring-1 ring-inset"
+            :style="{ background: (statusConfig[r.status] && statusConfig[r.status].bg) || '#E6E7E9', color: (statusConfig[r.status] && statusConfig[r.status].color) || '#374151', '--tw-ring-color': (statusConfig[r.status] && statusConfig[r.status].color) ? statusConfig[r.status].color + '30' : '#37415130' }"
+          >
+            {{ r.status || 'Inconnu' }}
+          </span>
+        </div>
 
-      <div class="space-y-2 sm:space-y-3 p-3 sm:p-4">
-        <div
-          v-for="(r, i) in filtered"
-          :key="r.id"
-          class="rounded-xl sm:rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 p-3 sm:p-4 transition-colors hover:bg-gray-50 dark:hover:bg-slate-800"
-        >
-          <div class="mb-2 sm:mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ r.date }} • {{ r.id }}</p>
-              <h3 class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">{{ r.objet }}</h3>
+        <!-- Meta Info -->
+        <div class="space-y-2.5 mb-6 flex-grow">
+          <div class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400">
+            <div class="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800">
+              <User class="w-3.5 h-3.5" />
             </div>
-            <span
-              class="text-xs px-2 py-1 sm:px-2.5 sm:py-1 rounded-full flex-shrink-0"
-              :style="{ background: (statusConfig[r.status] && statusConfig[r.status].bg) || '#E6E7E9', color: (statusConfig[r.status] && statusConfig[r.status].color) || '#374151', fontWeight: 600 }"
+            <div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Délégué</p>
+              <span class="truncate font-semibold text-slate-700 dark:text-slate-300">{{ r.delegue || 'Aucun délégué' }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400">
+            <div class="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800">
+              <Users class="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Groupe</p>
+              <span class="truncate font-medium">{{ r.filiere || 'Non renseigné' }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400">
+            <div class="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800">
+              <Clock class="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Date</p>
+              <span class="truncate font-medium">{{ r.date }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+
+          <div class="flex gap-2">
+            <button
+              @click.stop="openDetail(r)"
+              class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-blue-500/20"
+              style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%)"
             >
-              {{ r.status || 'Inconnu' }}
-            </span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-xs sm:text-sm sm:grid-cols-3 lg:grid-cols-4 mb-2 sm:mb-3">
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              <div
-                class="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0"
-                :style="{ background: avatarColors[i % 4], fontWeight: 700 }"
-              >
-                {{ r.etudiant.charAt(0) }}
-              </div>
-              <div class="min-w-0">
-                <p class="text-xs text-gray-500 dark:text-gray-400">Étudiant</p>
-                <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ r.etudiant }}</p>
-              </div>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Filière</p>
-              <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ r.filiere }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Délégué</p>
-              <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ r.delegue }}</p>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-1.5 sm:gap-2">
-            <button
-              @click="openDetail(r)"
-              class="rounded-lg bg-blue-50 dark:bg-blue-900/30 px-2 py-1 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50"
-            >Voir d.</button>
+              Voir
+            </button>
             <button
               v-if="r.status === 'En attente'"
-              @click="handleAction(r.id, 'Acceptée')"
-              class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
-            >✓</button>
+              @click.stop="openDetail(r, 'Acceptée')"
+              class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-green-500/20"
+              style="background: linear-gradient(135deg, #16A34A 0%, #15803D 50%, #166534 100%)"
+            >
+              Accepter
+            </button>
             <button
               v-if="r.status === 'En attente'"
-              @click="openDetail(r)"
-              class="rounded-lg bg-red-50 dark:bg-red-900/30 px-2 py-1 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 transition-colors hover:bg-red-100 dark:hover:bg-red-900/50"
-            >✗</button>
+              @click.stop="openDetail(r, 'Refusée')"
+              class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-red-500/20"
+              style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)"
+            >
+              Refuser
+            </button>
           </div>
         </div>
       </div>
@@ -92,90 +111,123 @@
       v-if="showModal && selected"
       class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       style="background: rgba(0,0,0,0.4)"
-      @click="showModal = false; selected = null"
+      @click="showModal = false; selected = null; pendingAction = null"
     >
       <div
-        class="rounded-2xl p-4 sm:p-6 w-full max-w-md relative bg-white dark:bg-slate-800 shadow-2xl border border-gray-100 dark:border-slate-700"
+        class="bg-card dark:bg-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-border/50 overflow-hidden"
         @click.stop
       >
-        <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <p class="text-xs mb-1 text-gray-400 dark:text-gray-500">{{ selected.id }}</p>
-            <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ selected.objet }}</h3>
+            <h3 class="text-lg font-bold text-foreground">{{ selected.objet }}</h3>
+            <p class="text-xs font-mono text-muted-foreground mt-0.5">{{ selected.id }}</p>
           </div>
-          <span
-            class="text-xs px-2 py-1 rounded-full"
-            :style="{
-              background: (statusConfig[selected.status] && statusConfig[selected.status].bg) || '#E6E7E9',
-              color: (statusConfig[selected.status] && statusConfig[selected.status].color) || '#374151',
-              fontWeight: 600,
-            }"
-          >
-            {{ selected.status || 'Inconnu' }}
-          </span>
+          <button @click="showModal = false; selected = null; pendingAction = null" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
-        <div class="flex flex-col gap-2 mb-4 text-xs sm:text-sm">
-          <div class="flex justify-between">
-            <span class="text-gray-400 dark:text-gray-500">Étudiant</span>
-            <span class="truncate ml-2 text-right font-medium text-gray-900 dark:text-white">{{ selected.etudiant }}</span>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5 animate-slide-down">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+            <div>
+              <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Étudiant</p>
+              <p class="text-foreground font-semibold">{{ selected.etudiant }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Filière</p>
+              <p class="text-foreground font-semibold line-clamp-1">{{ selected.filiere }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Délégué</p>
+              <p class="text-foreground font-semibold line-clamp-1">{{ selected.delegue || 'Aucun' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Statut</p>
+              <span
+                class="inline-flex text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ring-1 ring-inset"
+                :style="{ background: (statusConfig[selected.status] && statusConfig[selected.status].bg) || '#E6E7E9', color: (statusConfig[selected.status] && statusConfig[selected.status].color) || '#374151', '--tw-ring-color': (statusConfig[selected.status] && statusConfig[selected.status].color) ? statusConfig[selected.status].color + '30' : '#37415130' }"
+              >
+                {{ selected.status || 'Inconnu' }}
+              </span>
+            </div>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400 dark:text-gray-500">Filière</span>
-            <span class="truncate ml-2 text-right font-medium text-gray-900 dark:text-white">{{ selected.filiere }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400 dark:text-gray-500">Délégué</span>
-            <span class="truncate ml-2 text-right font-medium text-gray-900 dark:text-white">{{ selected.delegue }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400 dark:text-gray-500">Date</span>
-            <span class="truncate ml-2 text-right font-medium text-gray-900 dark:text-white">{{ selected.date }}</span>
+
+          <div class="mt-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4">
+            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Description</p>
+            <p class="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
+              {{ selected.description || 'Aucune description disponible.' }}
+            </p>
           </div>
         </div>
 
-        <div
-          class="rounded-xl p-2 sm:p-3 mb-4 text-xs sm:text-sm bg-gray-50 dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-slate-700"
-          style="line-height: 1.6"
-        >
-          {{ selected.description }}
-        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-5">
+          <h4 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Motif de décision</h4>
 
-        <template v-if="selected.status === 'En attente'">
-          <div class="mb-4">
-            <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-900 dark:text-white">Motif de décision (optionnel)</label>
+          <div v-if="selected.status === 'En attente'" class="rounded-2xl border border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/50 p-4">
             <textarea
               v-model="motif"
               placeholder="Expliquez brièvement la raison de votre décision..."
-              class="w-full rounded-xl p-2 sm:p-3 text-xs sm:text-sm outline-none resize-none border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/20"
-              style="min-height: 80px"
+              class="w-full p-4 rounded-2xl border border-border bg-slate-50 dark:bg-slate-900/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+              rows="4"
             />
           </div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+
+          <div v-else class="flex flex-col items-center py-10">
+            <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+              <CheckCircle class="w-7 h-7 text-gray-300" />
+            </div>
+            <p class="text-sm text-gray-400 font-medium">Ticket déjà traité</p>
+            <p class="text-xs text-gray-300 mt-1">Les actions sont désactivées</p>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-border bg-card/50">
+          <div class="flex gap-3">
             <button
-              @click="handleAction(selected.id, 'Acceptée')"
-              class="flex-1 py-2 sm:py-2.5 rounded-xl text-white text-xs sm:text-sm transition-all hover:opacity-90 active:scale-95"
-              style="background: linear-gradient(135deg, #128c3e 0%, #16A34A 50%, #0f7a35 100%); font-weight: 600; box-shadow: 0 2px 8px rgba(22,163,74,0.35)"
+              v-if="selected.status === 'En attente' && pendingAction === 'Acceptée'"
+              @click="handleAction(selected.id, pendingAction)"
+              class="flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-green-500/20"
+              style="background: linear-gradient(135deg, #16A34A 0%, #15803D 50%, #166534 100%)"
             >
-              ✓ Accepter
+              Confirmer l'acceptation
             </button>
             <button
-              @click="handleAction(selected.id, 'Refusée')"
-              class="flex-1 py-2 sm:py-2.5 rounded-xl text-white text-xs sm:text-sm transition-all hover:opacity-90 active:scale-95"
-              style="background: linear-gradient(135deg, #c41e1e 0%, #DC2626 50%, #a51b1b 100%); font-weight: 600; box-shadow: 0 2px 8px rgba(220,38,38,0.35)"
+              v-if="selected.status === 'En attente' && pendingAction === 'Refusée'"
+              @click="handleAction(selected.id, pendingAction)"
+              class="flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-red-500/20"
+              style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)"
             >
-              ✗ Refuser
+              Confirmer le refus
+            </button>
+            <button
+              v-if="selected.status === 'En attente' && !pendingAction"
+              @click="pendingAction = 'Acceptée'"
+              class="flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-green-500/20"
+              style="background: linear-gradient(135deg, #16A34A 0%, #15803D 50%, #166534 100%)"
+            >
+              Accepter
+            </button>
+            <button
+              v-if="selected.status === 'En attente' && !pendingAction"
+              @click="pendingAction = 'Refusée'"
+              class="flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-red-500/20"
+              style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)"
+            >
+              Refuser
+            </button>
+            <button
+              v-if="selected.status === 'En attente' && pendingAction"
+              @click="pendingAction = null"
+              class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-muted-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+            >
+              Annuler choix
+            </button>
+            <button
+              @click="showModal = false; selected = null; pendingAction = null"
+              class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-muted-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+            >
+              Fermer
             </button>
           </div>
-        </template>
-
-        <button
-          v-if="selected.status !== 'En attente'"
-          @click="showModal = false; selected = null"
-          class="w-full py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-        >
-          Fermer
-        </button>
+        </div>
       </div>
     </div>
   </div>
@@ -183,11 +235,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { CheckCircle, XCircle, Clock } from 'lucide-vue-next';
+import { CheckCircle, XCircle, Clock , User, Users } from 'lucide-vue-next';
 import { listTickets } from '../../../composables/useTickets'
-import { decideTicket } from '../../../composables/useAdmin'
-
-const avatarColors = ['#4F5CF5', '#818CF8', '#10B981', '#F59E0B'];
+import { decideTicket, listUsers } from '../../../composables/useAdmin'
 
 const statusConfig = {
   'En attente': { bg: '#FEF9C3', color: '#CA8A04', icon: Clock },
@@ -197,21 +247,48 @@ const statusConfig = {
 
 const reclamations = ref([]);
 
+function mapTicketWithUser(t, usersById = {}) {
+  const user = usersById[t.utilisateur_id]
+  const delegueName =
+    user?.nom ||
+    user?.name ||
+    user?.email ||
+    t.delegue ||
+    t.etudiant_nom ||
+    'Délégué inconnu'
+
+  const groupName =
+    user?.filiere ||
+    t.filiere ||
+    t.filiere_ticket ||
+    t.groupe ||
+    t.groupe_nom ||
+    ''
+
+  return {
+    id: t.id,
+    etudiant: delegueName,
+    filiere: groupName,
+    objet: t.object_ticket || t.object || t.objet || '',
+    date: t.cree_le_ticket || t.inserted_at || '',
+    status: formatStatus(t.statut_ticket || t.status || 'en_attente'),
+    description: t.description_ticket || t.description || '',
+    delegue: delegueName,
+  }
+}
+
 // Load tickets from backend
 onMounted(async () => {
   try {
-    const res = await listTickets()
-    if (res && res.data) {
-      reclamations.value = res.data.map(t => ({
-        id: t.id,
-        etudiant: (t.utilisateur && (t.utilisateur.nom || t.utilisateur.email)) || t.etudiant_nom || 'Étudiant',
-        filiere: t.filiere || t.filiere_ticket || '',
-        objet: t.object_ticket || t.object || t.objet || '',
-        date: t.cree_le_ticket || t.inserted_at || '',
-        status: formatStatus(t.statut_ticket || t.status || 'en_attente'),
-        description: t.description_ticket || t.description || '',
-        delegue: t.delegue || '',
-      }))
+    const [ticketsRes, usersRes] = await Promise.all([listTickets(), listUsers()])
+    const users = (usersRes && usersRes.data) ? usersRes.data : []
+    const usersById = users.reduce((acc, u) => {
+      acc[u.id] = u
+      return acc
+    }, {})
+
+    if (ticketsRes && ticketsRes.data) {
+      reclamations.value = ticketsRes.data.map(t => mapTicketWithUser(t, usersById))
     }
   } catch (err) {
     console.error('Failed to load admin tickets', err)
@@ -222,16 +299,17 @@ const filter = ref('Toutes');
 const selected = ref(null);
 const showModal = ref(false);
 const motif = ref('');
+const pendingAction = ref(null);
 
 const filtered = computed(() =>
   filter.value === 'Toutes' ? reclamations.value : reclamations.value.filter(r => r.status === filter.value)
 );
 
 const chips = computed(() => [
-  { label: 'Total', value: reclamations.value.length, color: '#255fe3', bg: '#DEE2F0', gradient: 'linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%)', shadow: '0 2px 8px rgba(37,95,227,0.35)', filter: 'Toutes' },
-  { label: 'En attente', value: reclamations.value.filter(r => r.status === 'En attente').length, color: '#CA8A04', bg: '#FEF9C3', gradient: 'linear-gradient(135deg, #b47d04 0%, #CA8A04 50%, #a16e03 100%)', shadow: '0 2px 8px rgba(202,138,4,0.35)', filter: 'En attente' },
-  { label: 'Acceptées', value: reclamations.value.filter(r => r.status === 'Acceptée').length, color: '#16A34A', bg: '#DCFCE7', gradient: 'linear-gradient(135deg, #128c3e 0%, #16A34A 50%, #0f7a35 100%)', shadow: '0 2px 8px rgba(22,163,74,0.35)', filter: 'Acceptée' },
-  { label: 'Refusées', value: reclamations.value.filter(r => r.status === 'Refusée').length, color: '#DC2626', bg: '#FEE2E2', gradient: 'linear-gradient(135deg, #c41e1e 0%, #DC2626 50%, #a51b1b 100%)', shadow: '0 2px 8px rgba(220,38,38,0.35)', filter: 'Refusée' },
+  { label: 'Total', value: reclamations.value.length, color: '#255fe3', bg: '#DEE2F0', gradient: 'linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%)', shadow: '0 2px 8px rgba(37,95,227,0.35)', filter: 'Toutes', icon: CheckCircle },
+  { label: 'En attente', value: reclamations.value.filter(r => r.status === 'En attente').length, color: '#CA8A04', bg: '#FEF9C3', gradient: 'linear-gradient(135deg, #b47d04 0%, #CA8A04 50%, #a16e03 100%)', shadow: '0 2px 8px rgba(202,138,4,0.35)', filter: 'En attente', icon: Clock },
+  { label: 'Acceptées', value: reclamations.value.filter(r => r.status === 'Acceptée').length, color: '#16A34A', bg: '#DCFCE7', gradient: 'linear-gradient(135deg, #128c3e 0%, #16A34A 50%, #0f7a35 100%)', shadow: '0 2px 8px rgba(22,163,74,0.35)', filter: 'Acceptée', icon: CheckCircle },
+  { label: 'Refusées', value: reclamations.value.filter(r => r.status === 'Refusée').length, color: '#DC2626', bg: '#FEE2E2', gradient: 'linear-gradient(135deg, #c41e1e 0%, #DC2626 50%, #a51b1b 100%)', shadow: '0 2px 8px rgba(220,38,38,0.35)', filter: 'Refusée', icon: XCircle },
 ]);
 
 const handleAction = async (id, action) => {
@@ -246,18 +324,15 @@ const handleAction = async (id, action) => {
     // call admin decide endpoint to ensure backend normalizes status and sends notifications
     await decideTicket(id, { decision: { action: actionKey, motif: motif.value || '' } })
     // reload list to get authoritative statuses
-    const res = await listTickets(true)
-    if (res && res.data) {
-      reclamations.value = res.data.map(t => ({
-        id: t.id,
-        etudiant: (t.utilisateur && (t.utilisateur.nom || t.utilisateur.email)) || t.etudiant_nom || 'Étudiant',
-        filiere: t.filiere || t.filiere_ticket || '',
-        objet: t.object_ticket || t.object || t.objet || '',
-        date: t.cree_le_ticket || t.inserted_at || '',
-        status: formatStatus(t.statut_ticket || t.status || 'en_attente'),
-        description: t.description_ticket || t.description || '',
-        delegue: t.delegue || '',
-      }))
+    const [ticketsRes, usersRes] = await Promise.all([listTickets(true), listUsers(true)])
+    const users = (usersRes && usersRes.data) ? usersRes.data : []
+    const usersById = users.reduce((acc, u) => {
+      acc[u.id] = u
+      return acc
+    }, {})
+
+    if (ticketsRes && ticketsRes.data) {
+      reclamations.value = ticketsRes.data.map(t => mapTicketWithUser(t, usersById))
     }
   } catch (err) {
     console.error('Failed to update ticket status', err)
@@ -266,6 +341,7 @@ const handleAction = async (id, action) => {
   showModal.value = false;
   motif.value = '';
   selected.value = null;
+  pendingAction.value = null;
 };
 
 function formatStatus(raw) {
@@ -279,9 +355,10 @@ function formatStatus(raw) {
   return human.charAt(0).toUpperCase() + human.slice(1)
 }
 
-const openDetail = (r) => {
+const openDetail = (r, action = null) => {
   selected.value = r;
   showModal.value = true;
   motif.value = '';
+  pendingAction.value = action;
 };
 </script>

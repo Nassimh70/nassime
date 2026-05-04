@@ -1,17 +1,25 @@
 <template>
   <div class="space-y-6">
     <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold" :style="{ color: 'var(--foreground)' }">Suggestions</h1>
-        <p class="text-sm mt-1" :style="{ color: 'var(--muted-foreground)' }">Améliorez notre communauté universitaire</p>
+              <!-- Info Banner -->
+    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+      <div class="flex items-start gap-3">
+        <Lightbulb class="w-6 h-6 text-purple-600 flex-shrink-0" />
+        <div>
+          <h3 class="font-semibold text-purple-900">Comment ça marche ?</h3>
+          <p class="text-sm text-purple-700 mt-1">
+            Proposez vos idées pour améliorer la vie universitaire. Les suggestions les plus votées seront examinées par l'administration.
+          </p>
+        </div>
       </div>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
       <button
         @click="showForm = !showForm"
-        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 shadow-lg"
-        style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)"
+        class="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-md"
+        style="background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 50%, var(--blue-deep) 100%); --blue: #255fe3; --blue-dark: #1f54d2; --blue-deep: #1d3f95; font-weight: 600"
       >
-        <Plus class="w-4 h-4" />
+        <Plus class="w-3.5 h-3.5" />
         Nouvelle suggestion
       </button>
     </div>
@@ -33,35 +41,23 @@
     </Transition>
 
     <!-- Info Banner -->
-    <div class="rounded-xl p-4 border" :style="{ background: 'rgba(168, 85, 247, 0.05)', borderColor: 'rgba(168, 85, 247, 0.2)' }">
-      <div class="flex items-start gap-3">
-        <Lightbulb class="w-5 h-5 flex-shrink-0" style="color: #a855f7" />
-        <div>
-          <h3 class="font-semibold text-sm" :style="{ color: 'var(--foreground)' }">Comment ça marche ?</h3>
-          <p class="text-xs mt-1" :style="{ color: 'var(--muted-foreground)' }">
-            Proposez vos idées pour améliorer la vie universitaire. Les suggestions les plus votées seront examinées par l'administration.
-          </p>
-        </div>
-      </div>
-    </div>
 
     <!-- Formulaire d'ajout -->
     <Transition name="slide-fade">
-      <div v-if="showForm" class="rounded-xl p-6 border" :style="{ background: 'var(--card)', borderColor: 'rgba(99, 102, 241, 0.25)', boxShadow: '0 4px 24px rgba(99, 102, 241, 0.08)' }">
-        <h3 class="text-base font-bold mb-5 flex items-center gap-2" :style="{ color: 'var(--foreground)' }">
-          <Sparkles class="w-5 h-5" style="color: #8b5cf6" />
+      <div v-if="showForm" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5 animate-slide-down">
+                  
+       <h3 class="text-sm mb-3 form-title">
           Nouvelle Suggestion
         </h3>
         <div class="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2">
           <input 
             v-model="formData.title" 
             placeholder="Titre de la suggestion*" 
-            class="col-span-1 sm:col-span-2 px-4 py-2.5 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-            :style="{ background: 'var(--surface-card)', borderColor: 'rgba(99, 102, 241, 0.2)', color: 'var(--foreground)' }"
+            class="col-span-1 sm:col-span-2"
           />
           <!-- Author (auto-filled, read-only) -->
           <div class="relative">
-            <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: #a855f7" />
+            <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--primary)" />
             <input 
               :value="userName"
               disabled
@@ -78,8 +74,7 @@
             v-model="formData.description" 
             placeholder="Décrivez votre suggestion en détail...*" 
             rows="4" 
-            class="col-span-1 sm:col-span-2 px-4 py-2.5 rounded-xl border text-sm resize-none transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-            :style="{ background: 'var(--surface-card)', borderColor: 'rgba(99, 102, 241, 0.2)', color: 'var(--foreground)' }"
+             class="col-span-2 resize-none"
           ></textarea>
         </div>
         <div class="flex gap-3 justify-end">
@@ -94,7 +89,7 @@
             @click="addSuggestion" 
             :disabled="submitting || !formValid"
             class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)"
+              style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
           >
             <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
             <Send v-else class="w-4 h-4" />
@@ -104,28 +99,43 @@
       </div>
     </Transition>
 
-    <!-- Search & Filters -->
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div class="relative flex-1">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" :style="{ color: 'var(--muted-foreground)' }" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Rechercher une suggestion..."
-          class="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-          :style="{ background: 'var(--surface-card)', borderColor: 'rgba(99, 102, 241, 0.15)', color: 'var(--foreground)' }"
-        />
-      </div>
-    </div>
+        <!-- Stats Section -->
 
+      <div class="grid grid-cols-3 gap-4">
+        <div v-for="(stat, index) in suggestionStats" :key="index" class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div :class="['inline-flex p-2 rounded-lg mb-2', stat.color]">
+            <component :is="stat.icon" class="w-5 h-5" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ stat.label }}</p>
+        </div>
+      </div>
+
+    <!-- Search & Filters -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-700 shadow-sm" >
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1 relative">
+            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Rechercher une suggestion..."
+              class="pl-10"
+            />
+          </div>
+        </div>
+      </div>
+    
     <!-- Category Filter Chips -->
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-3">
       <button
         @click="activeFilter = 'all'"
-        class="px-3.5 py-1.5 rounded-full text-xs font-medium transition-all"
+        class="px-3 py-1.5 rounded-xl text-xs transition-all"
         :style="{
-          background: activeFilter === 'all' ? '#6366f1' : 'rgba(99, 102, 241, 0.08)',
-          color: activeFilter === 'all' ? '#fff' : '#6366f1'
+          background: activeFilter === 'all' ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4338ca 100%)' : 'rgba(99, 102, 241, 0.08)',
+          color: activeFilter === 'all' ? '#fff' : '#6366f1',
+          fontWeight: activeFilter === 'all' ? 600 : 500,
+          boxShadow: activeFilter === 'all' ? '0 2px 8px rgba(99, 102, 241, 0.35)' : '0 1px 4px rgba(0,0,0,0.08)'
         }"
       >
         Toutes
@@ -134,21 +144,24 @@
         v-for="cat in categoryOptions"
         :key="cat.value"
         @click="activeFilter = cat.value"
-        class="px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5"
+        class="px-3 py-1.5 rounded-xl text-xs transition-all"
         :style="{
-          background: activeFilter === cat.value ? cat.dot : `${cat.dot}15`,
-          color: activeFilter === cat.value ? '#fff' : cat.dot
+          background: activeFilter === cat.value ? cat.gradient : `${cat.dot}15`,
+          color: activeFilter === cat.value ? '#fff' : cat.dot,
+          fontWeight: activeFilter === cat.value ? 600 : 500,
+          boxShadow: activeFilter === cat.value ? `0 2px 8px ${cat.dot}35` : '0 1px 4px rgba(0,0,0,0.08)'
         }"
       >
-        <span class="w-2 h-2 rounded-full" :style="{ background: activeFilter === cat.value ? '#fff' : cat.dot }"></span>
         {{ cat.label }}
       </button>
       <button
         @click="activeFilter = activeFilter === 'mine' ? 'all' : 'mine'"
-        class="px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ml-auto"
+        class="px-3 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 ml-auto"
         :style="{
-          background: activeFilter === 'mine' ? '#f59e0b' : 'rgba(245, 158, 11, 0.08)',
-          color: activeFilter === 'mine' ? '#fff' : '#f59e0b'
+          background: activeFilter === 'mine' ? 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' : 'rgba(245, 158, 11, 0.08)',
+          color: activeFilter === 'mine' ? '#fff' : '#f59e0b',
+          fontWeight: activeFilter === 'mine' ? 600 : 500,
+          boxShadow: activeFilter === 'mine' ? '0 2px 8px rgba(245, 158, 11, 0.35)' : '0 1px 4px rgba(0,0,0,0.08)'
         }"
       >
         <UserCheck class="w-3.5 h-3.5" />
@@ -156,27 +169,6 @@
       </button>
     </div>
 
-    <!-- Stats Section -->
-    <div class="rounded-xl p-5 border" :style="{ background: 'var(--card)', borderColor: 'rgba(99, 102, 241, 0.15)' }">
-      <h2 class="text-sm font-bold mb-4 flex items-center gap-2" :style="{ color: 'var(--foreground)' }">
-        <BarChart3 class="w-4 h-4" style="color: #6366f1" />
-        Statistiques
-      </h2>
-      <div class="grid grid-cols-3 gap-4">
-        <div class="text-center p-3 rounded-xl" :style="{ background: 'rgba(99, 102, 241, 0.06)' }">
-          <p class="text-2xl font-bold" style="color: #6366f1">{{ suggestions.length }}</p>
-          <p class="text-xs mt-1" :style="{ color: 'var(--muted-foreground)' }">Suggestions</p>
-        </div>
-        <div class="text-center p-3 rounded-xl" :style="{ background: 'rgba(168, 85, 247, 0.06)' }">
-          <p class="text-2xl font-bold" style="color: #a855f7">{{ totalVotes }}</p>
-          <p class="text-xs mt-1" :style="{ color: 'var(--muted-foreground)' }">Votes totaux</p>
-        </div>
-        <div class="text-center p-3 rounded-xl" :style="{ background: 'rgba(16, 185, 129, 0.06)' }">
-          <p class="text-2xl font-bold" style="color: #10b981">{{ myVotesCount }}</p>
-          <p class="text-xs mt-1" :style="{ color: 'var(--muted-foreground)' }">Mes votes</p>
-        </div>
-      </div>
-    </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex flex-col gap-3">
@@ -309,12 +301,12 @@ const userName = computed(() => {
 })
 
 const categoryOptions = ref([
-  { value: 'Innovation', label: 'Innovation', dot: '#6366f1' },
-  { value: 'Infrastructure', label: 'Infrastructure', dot: '#f59e0b' },
-  { value: 'Formation', label: 'Formation', dot: '#10b981' },
-  { value: 'Vie étudiante', label: 'Vie étudiante', dot: '#ec4899' },
-  { value: 'Services', label: 'Services', dot: '#8b5cf6' },
-  { value: 'Général', label: 'Général', dot: '#64748b' },
+  { value: 'Innovation', label: 'Innovation', dot: '#6366f1', gradient: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4338ca 100%)' },
+  { value: 'Infrastructure', label: 'Infrastructure', dot: '#f59e0b', gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' },
+  { value: 'Formation', label: 'Formation', dot: '#10b981', gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)' },
+  { value: 'Vie étudiante', label: 'Vie étudiante', dot: '#ec4899', gradient: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #be185d 100%)' },
+  { value: 'Services', label: 'Services', dot: '#8b5cf6', gradient: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #6d28d9 100%)' },
+  { value: 'Général', label: 'Général', dot: '#64748b', gradient: 'linear-gradient(135deg, #475569 0%, #64748b 50%, #334155 100%)' },
 ])
 
 const formData = ref({
@@ -479,11 +471,17 @@ const filteredSuggestions = computed(() => {
   }
 
   // Sort by votes descending
-  return list.sort((a, b) => b.votes - a.votes)
+  return list.sort((a, b) => (b.likes + b.dislikes) - (a.likes + a.dislikes))
 })
 
-const totalVotes = computed(() => suggestions.value.reduce((acc, s) => acc + s.votes, 0))
-const myVotesCount = computed(() => suggestions.value.filter((s) => s.voted).length)
+const suggestionStats = computed(() => [
+  { label: 'Suggestions', value: suggestions.value.length, icon: Lightbulb, color: 'bg-blue-100 text-blue-600' },
+  { label: 'Votes totaux', value: totalVotes.value, icon: ThumbsUp, color: 'bg-orange-100 text-orange-600' },
+  { label: 'Mes votes', value: myVotesCount.value, icon: UserCheck, color: 'bg-green-100 text-green-600' },
+])
+
+const totalVotes = computed(() => suggestions.value.reduce((acc, s) => acc + (s.likes ?? 0) + (s.dislikes ?? 0), 0))
+const myVotesCount = computed(() => suggestions.value.filter((s) => s.userVote !== null).length)
 </script>
 
 <style scoped>

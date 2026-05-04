@@ -5,6 +5,7 @@ defmodule BackendWeb.SouggestionController do
   alias Backend.Communication
   alias Backend.Communication.Souggestion
   alias Backend.Repo
+  require Logger
 
   action_fallback(BackendWeb.FallbackController)
 
@@ -37,6 +38,24 @@ defmodule BackendWeb.SouggestionController do
          {:ok, %Souggestion{} = souggestion} <- Communication.create_souggestion(params) do
       # Preload associations so souggestion_payload can access etudiant.utilisateur
       souggestion = Repo.preload(souggestion, etudiant: :utilisateur)
+
+      # create a broadcast notification for all users
+      try do
+        Backend.Support.create_notification(%{
+          "type_notifications" => "nouvelle_souggestion",
+          "message_notifications" => "Nouvelle suggestion: #{souggestion.titre_souggestion}",
+          "cree_le_notifications" => DateTime.utc_now(),
+          "lien_notifications" => "/api/auth/souggestions/#{souggestion.id}",
+          "pour_tous" => true,
+          "utilisateur_id" => current.id
+        })
+      rescue
+        _ ->
+          Logger.debug(
+            "[SouggestionController] failed to create notification for souggestion=#{souggestion.id}"
+          )
+      end
+
       conn
       |> put_status(:created)
       |> json(%{data: souggestion_payload(souggestion, current.id)})

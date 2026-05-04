@@ -47,7 +47,6 @@ defmodule Backend.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 2.0"},
-      {:bcrypt_elixir, "~> 3.0"},
       {:joken, "~> 2.6"},
       {:guardian_db, "~> 2.0"}
     ]

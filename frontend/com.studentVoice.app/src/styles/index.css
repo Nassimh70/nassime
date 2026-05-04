@@ -2,6 +2,10 @@
 @import './common/theme.css';
 @import './common/fonts.css';
 
+body {
+  user-select: none;
+}
+
 /* ----------------------------------------- */
 /* 💫 Premium Animations                     */
 /* ----------------------------------------- */

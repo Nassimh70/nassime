@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudentVoiceApp — Diagramme de Classes UML</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: #d6d3cc;
+  --border-strong: #b0aca3;
+  --text: #1a1916;
+  --text-muted: #6b6760;
+  --text-dim: #9a9690;
+  --accent-blue: #1a56a0;
+  --accent-blue-bg: #ddeeff;
+  --accent-violet: #5b21b6;
+  --accent-violet-bg: #ede9fe;
+  --accent-green: #14532d;
+  --accent-green-bg: #dcfce7;
+  --accent-amber: #92400e;
+  --accent-amber-bg: #fef3c7;
+  --accent-red: #991b1b;
+  --accent-red-bg: #fee2e2;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+
+  --cls-w: 200px;
+  --cls-header: 36px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.logo {
+  background: #1a1916;
+  color: #f5f4f0;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+header h1 {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+header p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.legend-strip {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.leg svg { flex-shrink: 0; }
+
+/* CANVAS */
+.canvas-wrap {
+  position: relative;
+  overflow: auto;
+  padding: 40px;
+  flex: 1;
+}
+
+/* SVG overlay for arrows */
+.arrow-layer {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* CLASS CARDS */
+.cls {
+  position: absolute;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  width: var(--cls-w);
+  font-family: var(--mono);
+  font-size: 11px;
+  z-index: 20;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.cls-head {
+  padding: 6px 10px;
+  border-bottom: 1.5px solid var(--border-strong);
+  border-radius: 7px 7px 0 0;
+}
+.cls-stereotype {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.cls-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cls-section {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.cls-section:last-child { border-bottom: none; }
+.cls-section-title {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.attr {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 0;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.vis { font-size: 12px; line-height: 1; flex-shrink: 0; }
+.vis-priv { color: #dc2626; }
+.vis-pub  { color: #15803d; }
+.aname { color: #1a1916; }
+.atype { color: var(--accent-blue); font-size: 9.5px; }
+.mname { color: var(--accent-violet); }
+
+/* LAYER BADGES */
+.layer-badge {
+  position: absolute;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  z-index: 5;
+}
+.badge-blue   { background: var(--accent-blue-bg);   color: var(--accent-blue); }
+.badge-violet { background: var(--accent-violet-bg); color: var(--accent-violet); }
+.badge-green  { background: var(--accent-green-bg);  color: var(--accent-green); }
+.badge-amber  { background: var(--accent-amber-bg);  color: var(--accent-amber); }
+.badge-red    { background: var(--accent-red-bg);    color: var(--accent-red); }
+.badge-gray   { background: #e5e3de; color: #44403a; }
+
+/* LAYER RECTS */
+.layer-rect {
+  position: absolute;
+  border-radius: 14px;
+  border: 1.5px dashed;
+  z-index: 1;
+}
+
+/* color per layer */
+.cls.layer-pres .cls-head { background: #f0f7ff; }
+.cls.layer-app  .cls-head { background: #f5f3ff; }
+.cls.layer-auth .cls-head { background: #f0fff4; }
+.cls.layer-ped  .cls-head { background: #fffbeb; }
+.cls.layer-com  .cls-head { background: #fef2f2; }
+.cls.layer-sup  .cls-head { background: #fff7ed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SV</div>
+  <div>
+    <h1>StudentVoiceApp — Diagramme de Classes UML</h1>
+    <p>Architecture 3 couches · Vue.js / Phoenix / PostgreSQL</p>
+  </div>
+  <div class="legend-strip">
+    <div class="leg">
+      <svg width="30" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#555" stroke-width="1.5"/><polygon points="22,3 30,6 22,9" fill="#555"/></svg>
+      Association
+    </div>
+    <div class="leg">
+      <svg width="30" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#dc2626" stroke-width="1.5"/><polygon points="18,3 22,6 18,9" fill="#dc2626"/><polygon points="0,3 6,6 0,9" fill="#dc2626"/></svg>
+      Composition
+    </div>
+    <div class="leg">
+      <svg width="30" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#d97706" stroke-width="1.5"/><polygon points="18,3 22,6 18,9" fill="none" stroke="#d97706"/><polygon points="0,3 6,6 0,9" fill="none" stroke="#d97706"/></svg>
+      Agrégation
+    </div>
+    <div class="leg">
+      <svg width="30" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,2"/><polygon points="22,3 30,6 22,9" fill="#7c3aed"/></svg>
+      Dépendance
+    </div>
+  </div>
+</header>
+
+<div class="canvas-wrap" id="canvas">
+
+<!-- ─── LAYER BACKGROUNDS ─── -->
+<div class="layer-rect" style="left:30px;top:30px;width:500px;height:200px;border-color:#bdd0f0;background:rgba(219,234,254,0.18)"></div>
+<div class="layer-badge badge-blue" style="left:44px;top:40px">Présentation — Vue.js 3</div>
+
+<div class="layer-rect" style="left:30px;top:255px;width:500px;height:130px;border-color:#c4b5fd;background:rgba(237,233,254,0.2)"></div>
+<div class="layer-badge badge-violet" style="left:44px;top:265px">Application — Phoenix Controllers</div>
+
+<div class="layer-rect" style="left:30px;top:415px;width:1430px;height:1120px;border-color:#a7f3d0;background:rgba(220,252,231,0.12)"></div>
+<div class="layer-badge badge-green" style="left:44px;top:425px">Domaine &amp; Données — Ecto Schemas</div>
+
+<!-- SUB-GROUP labels -->
+<div class="layer-badge badge-green"  style="left:44px;top:465px;font-size:9px;opacity:0.8">🔐 Authentification</div>
+<div class="layer-badge badge-amber"  style="left:44px;top:725px;font-size:9px;opacity:0.8">📚 Pédagogie</div>
+<div class="layer-badge badge-red"    style="left:44px;top:1025px;font-size:9px;opacity:0.8">🎫 Support</div>
+<div class="layer-badge badge-gray"   style="left:700px;top:465px;font-size:9px;opacity:0.8">📢 Communication</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 1 : PRÉSENTATION -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Views -->
+<div class="cls layer-pres" id="c-views" style="left:60px;top:80px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;interface&raquo;</div>
+    <div class="cls-name">Views</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Méthodes</div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">render</span><span class="atype">()</span></div>
+  </div>
+</div>
+
+<!-- ApiService -->
+<div class="cls layer-pres" id="c-api" style="left:320px;top:80px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;interface&raquo;</div>
+    <div class="cls-name">API Services (Axios)</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Méthodes</div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">get</span><span class="atype">(endpoint)</span></div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">post</span><span class="atype">(endpoint, data)</span></div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">put</span><span class="atype">(endpoint, data)</span></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 2 : APPLICATION -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Controllers -->
+<div class="cls layer-app" id="c-ctrl" style="left:320px;top:295px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;controller&raquo;</div>
+    <div class="cls-name">Router / Controllers</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Actions</div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">index</span><span class="atype">()</span></div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">show</span><span class="atype">()</span></div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">create</span><span class="atype">()</span></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 3 : DOMAINE — AUTH -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Role -->
+<div class="cls layer-auth" id="c-role" style="left:60px;top:500px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Role</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">nom_roles</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- Utilisateur -->
+<div class="cls layer-auth" id="c-user" style="left:320px;top:500px;width:220px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Utilisateur</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">email_utilisateurs</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">mot_de_pass</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">prenom_utilisateurs</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">nom_utilisateurs</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">avatar_utilisateurs</span><span class="atype">: String</span></div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Méthodes</div>
+    <div class="attr"><span class="vis vis-pub">+</span><span class="mname">changeset</span><span class="atype">(attrs)</span></div>
+  </div>
+</div>
+
+<!-- Etudiant -->
+<div class="cls layer-auth" id="c-etud" style="left:60px;top:660px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo; profil</div>
+    <div class="cls-name">Etudiant</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">est_delegue</span><span class="atype">: Boolean</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">date_naissance</span><span class="atype">: Date</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">telephone</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- Professeur -->
+<div class="cls layer-auth" id="c-prof" style="left:320px;top:660px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo; profil</div>
+    <div class="cls-name">Professeur</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">grade_professeurs</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">telephone</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">specialite</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- Administration -->
+<div class="cls layer-auth" id="c-admin" style="left:580px;top:660px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo; profil</div>
+    <div class="cls-name">Administration</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">poste</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">departement</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">telephone</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 3 : DOMAINE — PÉDAGOGIE -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Groupe -->
+<div class="cls layer-ped" id="c-groupe" style="left:60px;top:790px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Groupe</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">code_groupes</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">libele_groupes</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">annee_academique</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">filier_groupe</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">niveau_groupe</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- Module -->
+<div class="cls layer-ped" id="c-module" style="left:320px;top:790px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Module</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">code_cours</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">intitule_cours</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">semestre_module</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">credits_module</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">avancement_pct</span><span class="atype">: Integer</span></div>
+  </div>
+</div>
+
+<!-- Chapter -->
+<div class="cls layer-ped" id="c-chapter" style="left:600px;top:790px;width:190px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Chapter</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">title</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">date</span><span class="atype">: Date</span></div>
+  </div>
+</div>
+
+<!-- Grade -->
+<div class="cls layer-ped" id="c-grade" style="left:60px;top:990px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Grade</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">note_td_tp</span><span class="atype">: Decimal</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">note_examen</span><span class="atype">: Decimal</span></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 3 : DOMAINE — SUPPORT -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Ticket -->
+<div class="cls layer-sup" id="c-ticket" style="left:60px;top:1075px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Ticket</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">portee_ticket</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">type_ticket</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">categorie_ticket</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">statut_ticket</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">priorite_ticket</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">note_satisfaction</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">cree_le_ticket</span><span class="atype">: DateTime</span></div>
+  </div>
+</div>
+
+<!-- Commentaire -->
+<div class="cls layer-sup" id="c-comment" style="left:330px;top:1095px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Commentaire</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">contenu</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">interne</span><span class="atype">: Boolean</span></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LAYER 3 : DOMAINE — COMMUNICATION -->
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<!-- Annonce -->
+<div class="cls layer-com" id="c-annonce" style="left:750px;top:500px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Annonce</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">titre_annonce</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">contenu_annonce</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">date_publication</span><span class="atype">: DateTime</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">type_annonce</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">like_annonce</span><span class="atype">: Integer</span></div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="cls layer-com" id="c-notif" style="left:750px;top:710px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Notification</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">type_notifications</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">message</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">cree_le</span><span class="atype">: DateTime</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">lien_notifications</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">pour_tous</span><span class="atype">: Boolean</span></div>
+  </div>
+</div>
+
+<!-- Souggestion -->
+<div class="cls layer-com" id="c-sugg" style="left:1020px;top:500px;width:210px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">Souggestion</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">titre_souggestion</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">contenu</span><span class="atype">: String</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">like_souggestion</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">dislike_souggestion</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">category</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- SuggestionVote -->
+<div class="cls layer-com" id="c-svote" style="left:1020px;top:710px;width:200px">
+  <div class="cls-head">
+    <div class="cls-stereotype">&laquo;schema&raquo;</div>
+    <div class="cls-name">SuggestionVote</div>
+  </div>
+  <div class="cls-section">
+    <div class="cls-section-title">Attributs</div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">id</span><span class="atype">: Integer</span></div>
+    <div class="attr"><span class="vis vis-priv">−</span><span class="aname">vote_type</span><span class="atype">: String</span></div>
+  </div>
+</div>
+
+<!-- SVG ARROWS LAYER -->
+<svg class="arrow-layer" id="arrows" xmlns="http://www.w3.org/2000/svg"></svg>
+
+</div><!-- canvas-wrap -->
+
+<script>
+const CW = 200, CH_APPROX = 36;
+
+function el(id) { return document.getElementById(id); }
+function rect(id) {
+  const e = el(id);
+  const cw = el('canvas');
+  const er = e.getBoundingClientRect();
+  const cr = cw.getBoundingClientRect();
+  return {
+    x: e.offsetLeft,
+    y: e.offsetTop,
+    w: e.offsetWidth,
+    h: e.offsetHeight
+  };
+}
+
+function midX(r) { return r.x + r.w / 2; }
+function midY(r) { return r.y + r.h / 2; }
+function right(r) { return r.x + r.w; }
+function bottom(r) { return r.y + r.h; }
+
+const svg = el('arrows');
+
+function setSize() {
+  const canvas = el('canvas');
+  const maxW = canvas.scrollWidth;
+  const maxH = canvas.scrollHeight;
+  svg.setAttribute('width', maxW);
+  svg.setAttribute('height', maxH);
+  svg.setAttribute('viewBox', `0 0 ${maxW} ${maxH}`);
+}
+
+/* ── ARROW PRIMITIVES ── */
+function makeDefs() {
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const makeMarker = (id, color, filled) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id', id);
+    m.setAttribute('viewBox','0 0 10 10');
+    m.setAttribute('refX','8');
+    m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','7');
+    m.setAttribute('markerHeight','7');
+    m.setAttribute('orient','auto-start-reverse');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M1 1 L9 5 L1 9 Z');
+    p.setAttribute('fill', filled ? color : 'none');
+    p.setAttribute('stroke', color);
+    p.setAttribute('stroke-width','1');
+    m.appendChild(p);
+    return m;
+  };
+  const makeDiamond = (id, color, filled) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id', id);
+    m.setAttribute('viewBox','-1 -1 12 12');
+    m.setAttribute('refX','10');
+    m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','10');
+    m.setAttribute('markerHeight','10');
+    m.setAttribute('orient','auto-start-reverse');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    p.setAttribute('points','0,5 5,0 10,5 5,10');
+    p.setAttribute('fill', filled ? color : 'white');
+    p.setAttribute('stroke', color);
+    p.setAttribute('stroke-width','1');
+    m.appendChild(p);
+    return m;
+  };
+  defs.appendChild(makeMarker('arr-black','#333',true));
+  defs.appendChild(makeMarker('arr-violet','#7c3aed',true));
+  defs.appendChild(makeMarker('arr-blue','#1a56a0',true));
+  defs.appendChild(makeDiamond('dia-red-fill','#dc2626',true));
+  defs.appendChild(makeDiamond('dia-amber-fill','#d97706',false));
+  svg.appendChild(defs);
+}
+
+function line(x1,y1,x2,y2,color,dash,startMarker,endMarker,label) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+  l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+  l.setAttribute('stroke',color);
+  l.setAttribute('stroke-width','1.5');
+  if(dash) l.setAttribute('stroke-dasharray','6,3');
+  if(endMarker)   l.setAttribute('marker-end',`url(#${endMarker})`);
+  if(startMarker) l.setAttribute('marker-start',`url(#${startMarker})`);
+  g.appendChild(l);
+  if(label) {
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const mx = (x1+x2)/2, my = (y1+y2)/2;
+    t.setAttribute('x', mx+4); t.setAttribute('y', my-4);
+    t.setAttribute('fill','#6b6760');
+    t.setAttribute('font-size','10');
+    t.setAttribute('font-family','DM Sans, sans-serif');
+    t.textContent = label;
+    g.appendChild(t);
+  }
+  svg.appendChild(g);
+}
+
+function path(d, color, dash, startM, endM, label) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',d);
+  p.setAttribute('stroke',color);
+  p.setAttribute('stroke-width','1.5');
+  p.setAttribute('fill','none');
+  if(dash) p.setAttribute('stroke-dasharray','6,3');
+  if(endM) p.setAttribute('marker-end',`url(#${endM})`);
+  if(startM) p.setAttribute('marker-start',`url(#${startM})`);
+  g.appendChild(p);
+  if(label) {
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const segs = d.match(/[\d.]+/g);
+    const mx = (parseFloat(segs[0])+parseFloat(segs[segs.length-2]))/2;
+    const my = (parseFloat(segs[1])+parseFloat(segs[segs.length-1]))/2;
+    t.setAttribute('x', mx+4); t.setAttribute('y', my-4);
+    t.setAttribute('fill','#6b6760');
+    t.setAttribute('font-size','10');
+    t.setAttribute('font-family','DM Sans, sans-serif');
+    t.textContent = label;
+    g.appendChild(t);
+  }
+  svg.appendChild(g);
+}
+
+function mult(x,y,txt) {
+  const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',x); t.setAttribute('y',y);
+  t.setAttribute('fill','#6b6760');
+  t.setAttribute('font-size','10');
+  t.setAttribute('font-weight','600');
+  t.setAttribute('font-family','JetBrains Mono, monospace');
+  t.textContent = txt;
+  svg.appendChild(t);
+}
+
+function drawArrows() {
+  const r = {};
+  ['views','api','ctrl','role','user','etud','prof','admin',
+   'groupe','module','chapter','grade','ticket','comment',
+   'annonce','notif','sugg','svote'].forEach(id => {
+    r[id] = rect('c-'+id);
+  });
+
+  /* ════ LAYER ARROWS ════ */
+
+  /* Views ..> ApiService */
+  path(`M ${right(r.views)} ${midY(r.views)} L ${r.api.x} ${midY(r.api)}`,
+    '#7c3aed', true, null, 'arr-violet', 'Appelle');
+
+  /* ApiService ..> Controllers */
+  path(`M ${midX(r.api)} ${bottom(r.api)} L ${midX(r.ctrl)} ${r.ctrl.y}`,
+    '#7c3aed', true, null, 'arr-violet', 'HTTP/JSON');
+
+  /* Controllers ..> Utilisateur */
+  path(`M ${midX(r.ctrl)} ${bottom(r.ctrl)} L ${midX(r.user)} ${r.user.y}`,
+    '#7c3aed', true, null, 'arr-violet', 'Manipule');
+
+  /* ════ UTILISATEUR → ROLE (association) ════ */
+  path(`M ${r.user.x} ${midY(r.user)} L ${right(r.role)} ${midY(r.role)}`,
+    '#333', false, null, 'arr-black', '1 possède 1');
+
+  /* ════ COMPOSITION Utilisateur *-- Etudiant ════ */
+  /* bend: down from user then left to etud */
+  const uy_bottom = bottom(r.user);
+  path(`M ${midX(r.user)} ${uy_bottom} L ${midX(r.user)} ${r.etud.y - 20} L ${right(r.etud)} ${r.etud.y - 20} L ${right(r.etud)} ${r.etud.y}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black');
+  mult(midX(r.user)+4, uy_bottom + 12, '1');
+  mult(right(r.etud)-22, r.etud.y - 24, '0..1');
+
+  /* COMPOSITION Utilisateur *-- Professeur */
+  path(`M ${midX(r.user)} ${uy_bottom} L ${midX(r.user)} ${r.prof.y - 20} L ${r.prof.x} ${r.prof.y - 20} L ${r.prof.x + 30} ${r.prof.y - 20} L ${r.prof.x + 30} ${r.prof.y}`,
+    '#dc2626', false, null, 'arr-black');
+
+  /* COMPOSITION Utilisateur *-- Administration */
+  path(`M ${right(r.user)} ${midY(r.user)} L ${right(r.user)+40} ${midY(r.user)} L ${right(r.user)+40} ${midY(r.admin)} L ${right(r.admin)} ${midY(r.admin)}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black');
+  mult(right(r.admin)+4, midY(r.admin)-4, '0..1');
+
+  /* ════ AGRÉGATION Utilisateur o-- Annonce ════ */
+  path(`M ${right(r.user)} ${r.user.y + 30} L ${r.annonce.x} ${r.user.y + 30} L ${r.annonce.x} ${r.annonce.y}`,
+    '#d97706', false, null, null);
+  path(`M ${r.annonce.x} ${r.annonce.y + 20}`, '#d97706', false, 'dia-amber-fill', null); /* just start marker trick below */
+  /* simpler: direct line with elbow */
+  path(`M ${right(r.user) + 2} ${r.user.y + 40} L ${midX(r.annonce)} ${r.user.y + 40} L ${midX(r.annonce)} ${r.annonce.y}`,
+    '#d97706', false, 'dia-amber-fill', 'arr-black', '1 publie *');
+
+  /* ════ AGRÉGATION Utilisateur o-- Ticket ════ */
+  path(`M ${r.user.x} ${r.user.y + 60} L ${r.user.x - 60} ${r.user.y + 60} L ${r.user.x - 60} ${r.ticket.y + 30} L ${r.ticket.x + 30} ${r.ticket.y + 30} L ${r.ticket.x + 30} ${r.ticket.y}`,
+    '#d97706', false, 'dia-amber-fill', 'arr-black', '1 crée *');
+
+  /* ════ AGRÉGATION Utilisateur o-- Notification ════ */
+  path(`M ${right(r.user)} ${r.user.y + 60} L ${r.notif.x - 10} ${r.user.y + 60} L ${r.notif.x - 10} ${r.notif.y} L ${r.notif.x} ${r.notif.y + 20}`,
+    '#d97706', false, 'dia-amber-fill', 'arr-black', '1 reçoit *');
+
+  /* ════ ASSOCIATION Utilisateur -- SuggestionVote ════ */
+  path(`M ${right(r.user)} ${r.user.y + 80} L ${r.svote.x - 20} ${r.user.y + 80} L ${r.svote.x - 20} ${midY(r.svote)} L ${r.svote.x} ${midY(r.svote)}`,
+    '#333', false, null, 'arr-black', '1 vote *');
+
+  /* ════ COMMENT écrit par Utilisateur ════ */
+  path(`M ${right(r.comment)} ${midY(r.comment)} L ${right(r.comment)+60} ${midY(r.comment)} L ${right(r.comment)+60} ${r.user.y + 100} L ${right(r.user)} ${r.user.y + 100}`,
+    '#333', false, null, 'arr-black', 'écrit par');
+
+  /* ════ PÉDAGOGIE ════ */
+
+  /* Groupe o-- Etudiant  (Groupe contient Etudiant) */
+  path(`M ${midX(r.groupe)} ${bottom(r.groupe)} L ${midX(r.groupe)} ${r.etud.y - 10} L ${midX(r.etud)} ${r.etud.y - 10} L ${midX(r.etud)} ${bottom(r.etud)}`,
+    '#d97706', false, null, null);
+  /* Draw from groupe bottom to etud bottom (via bridge above both) — simpler: */
+  path(`M ${right(r.groupe)} ${midY(r.groupe)} L ${r.etud.x} ${midY(r.groupe)}`,
+    '#d97706', false, 'dia-amber-fill', 'arr-black', '1 contient *');
+
+  /* Groupe -- Module */
+  path(`M ${right(r.groupe)} ${r.groupe.y + 30} L ${r.module.x} ${r.groupe.y + 30}`,
+    '#333', false, null, 'arr-black', '* étudie *');
+
+  /* Professeur -- Module */
+  path(`M ${midX(r.prof)} ${bottom(r.prof)} L ${midX(r.prof)} ${midY(r.module)} L ${r.module.x} ${midY(r.module)}`,
+    '#333', false, null, 'arr-black', '* enseigne *');
+
+  /* Module *-- Chapter */
+  path(`M ${right(r.module)} ${midY(r.module)} L ${r.chapter.x} ${midY(r.module)} L ${r.chapter.x} ${midY(r.chapter)}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black', '1 possède *');
+
+  /* Chapter -- Professeur (créé par) */
+  path(`M ${midX(r.chapter)} ${r.chapter.y} L ${midX(r.chapter)} ${r.prof.y + r.prof.h + 20} L ${right(r.prof)} ${r.prof.y + r.prof.h + 20}`,
+    '#333', false, null, 'arr-black', 'créé par');
+
+  /* Grade -- Etudiant */
+  path(`M ${midX(r.grade)} ${r.grade.y} L ${midX(r.grade)} ${bottom(r.etud) + 10} L ${midX(r.etud)} ${bottom(r.etud) + 10} L ${midX(r.etud)} ${bottom(r.etud)}`,
+    '#333', false, null, 'arr-black', '* évalue 1');
+
+  /* Grade -- Module */
+  path(`M ${right(r.grade)} ${midY(r.grade)} L ${r.grade.x + r.grade.w + 60} ${midY(r.grade)} L ${r.grade.x + r.grade.w + 60} ${bottom(r.module)} L ${midX(r.module)} ${bottom(r.module)}`,
+    '#333', false, null, 'arr-black', '* concerne 1');
+
+  /* Grade -- Professeur */
+  path(`M ${right(r.grade)} ${r.grade.y + 20} L ${right(r.grade)+80} ${r.grade.y + 20} L ${right(r.grade)+80} ${bottom(r.prof)} L ${midX(r.prof)+20} ${bottom(r.prof)}`,
+    '#333', false, null, 'arr-black', '* noté par 1');
+
+  /* ════ SUGGESTIONS ════ */
+
+  /* Etudiant o-- Souggestion */
+  path(`M ${midX(r.etud)} ${r.etud.y} L ${midX(r.etud)} ${r.etud.y - 40} L ${r.sugg.x - 20} ${r.etud.y - 40} L ${r.sugg.x - 20} ${midY(r.sugg)} L ${r.sugg.x} ${midY(r.sugg)}`,
+    '#d97706', false, 'dia-amber-fill', 'arr-black', '1 propose *');
+
+  /* Souggestion *-- SuggestionVote */
+  path(`M ${midX(r.sugg)} ${bottom(r.sugg)} L ${midX(r.sugg)} ${midY(r.svote)} L ${r.svote.x} ${midY(r.svote)}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black', '1 reçoit *');
+
+  /* ════ SUPPORT ════ */
+
+  /* Ticket *-- Commentaire (Composition) */
+  path(`M ${right(r.ticket)} ${midY(r.ticket)} L ${r.comment.x} ${midY(r.ticket)} L ${r.comment.x} ${midY(r.comment)}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black', '1 contient *');
+
+  /* Ticket *-- Notification (Composition via lien) */
+  path(`M ${right(r.ticket)} ${r.ticket.y + 20} L ${r.ticket.x + r.ticket.w + 120} ${r.ticket.y + 20} L ${r.ticket.x + r.ticket.w + 120} ${midY(r.notif)} L ${r.notif.x} ${midY(r.notif)}`,
+    '#dc2626', false, 'dia-red-fill', 'arr-black', '1 génère *');
+
+  /* Ticket -- Module (lié à, optionnel) */
+  path(`M ${right(r.ticket)} ${r.ticket.y + 40} L ${r.module.x} ${r.ticket.y + 40} L ${r.module.x} ${bottom(r.module)}`,
+    '#333', false, null, 'arr-black', '* lié à 0..1');
+}
+
+window.addEventListener('load', () => {
+  setSize();
+  makeDefs();
+  drawArrows();
+});
+</script>
+</body>
+</html>

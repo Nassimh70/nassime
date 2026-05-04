@@ -55,22 +55,54 @@
               </span>
             </div>
           </div>
+
+          <div class="mt-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4">
+            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Description</p>
+            <p class="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
+              {{ selectedTicket.description || 'Aucune description disponible.' }}
+            </p>
+          </div>
         </div>
 
-        <!-- Messages Section -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
-          <div v-for="(msg, idx) in selectedTicket.responses" :key="idx" class="flex gap-4">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold ring-1 ring-inset" 
-                 :class="msg.isProf ? 'bg-blue-50 text-blue-600 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-slate-100 text-slate-600 ring-slate-600/20 dark:bg-slate-800 dark:text-slate-400'">
-                {{ msg.name.charAt(0).toUpperCase() }}
+        <!-- Messages Section (styled like student thread) -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-5">
+          <h4 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Fil de discussion</h4>
+
+          <div v-if="!selectedTicket.responses || selectedTicket.responses.length === 0" class="flex flex-col items-center py-10">
+            <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+              <MessageSquare class="w-7 h-7 text-gray-300" />
             </div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-sm font-bold text-foreground">{{ msg.name }}</span>
-                <span v-if="msg.isProf" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-600/20 dark:text-blue-400 font-bold uppercase tracking-wider">Professeur</span>
-                <span class="text-[11px] text-muted-foreground ml-auto">{{ msg.time }}</span>
+            <p class="text-sm text-gray-400 font-medium">Pas encore de commentaires</p>
+            <p class="text-xs text-gray-300 mt-1">Soyez le premier à répondre</p>
+          </div>
+
+          <div v-else class="space-y-1">
+            <div
+              v-for="(msg, idx) in selectedTicket.responses"
+              :key="idx"
+              class="flex gap-3 group"
+            >
+              <!-- Avatar + timeline -->
+              <div class="flex flex-col items-center flex-shrink-0">
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                  :style="{ background: commentAvatarColor(msg.name || msg.expediteur || 'U') }"
+                >
+                  {{ (msg.name || msg.expediteur || 'U').charAt(0).toUpperCase() }}
+                </div>
+                <div v-if="idx < selectedTicket.responses.length - 1" class="w-0.5 flex-1 bg-gray-100 mt-1"></div>
               </div>
-              <p class="text-sm text-foreground/80 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-2xl rounded-tl-none">{{ msg.content }}</p>
+
+              <!-- Bubble -->
+              <div class="flex-1 pb-4">
+                <div class="flex items-baseline gap-2 mb-1">
+                  <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ msg.name || msg.expediteur }}</span>
+                  <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ msg.time }}</span>
+                </div>
+                <div class="bg-gray-50 dark:bg-slate-900/50 rounded-xl rounded-tl-sm px-4 py-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-slate-700 group-hover:border-indigo-200 dark:group-hover:border-indigo-800 transition-colors">
+                  {{ msg.content }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -80,13 +112,15 @@
           <textarea
             v-model="responseText"
             placeholder="Écrire une réponse..."
+            :disabled="selectedTicket && selectedTicket.status === 'Accepter'"
             class="w-full p-4 rounded-2xl border border-border bg-slate-50 dark:bg-slate-900/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
             rows="3"
           ></textarea>
           <div class="flex gap-3 mt-4">
             <button
               @click="sendResponse"
-              class="flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-blue-500/20"
+              :disabled="selectedTicket && selectedTicket.status === 'Accepter'"
+              :class="[{ 'opacity-50 pointer-events-none': selectedTicket && selectedTicket.status === 'Accepter' }, 'flex-1 px-4 py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95 shadow-lg shadow-blue-500/20']"
               style="background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 50%, var(--blue-deep) 100%)"
             >
               Envoyer la réponse
@@ -163,14 +197,24 @@
              </div>
           </div>
 
-          <button
-            v-if="ticket.status !== 'Résolu'"
-            @click.stop="resolveTicket(ticket.id)"
-            class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-green-500/20"
-            style="background: linear-gradient(135deg, #16A34A 0%, #15803D 50%, #166534 100%)"
-          >
-            Résoudre
-          </button>
+          <div class="flex gap-2">
+            <button
+              v-if="ticket.status !== 'Accepter' && ticket.status !== 'Refuser' && !ticket.locked"
+              @click.stop="acceptTicket(ticket.id)"
+              class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-green-500/20"
+              style="background: linear-gradient(135deg, #16A34A 0%, #15803D 50%, #166534 100%)"
+            >
+              Accepter
+            </button>
+            <button
+              v-if="ticket.status !== 'Refuser' && ticket.status !== 'Accepter' && !ticket.locked"
+              @click.stop="refuseTicket(ticket.id)"
+              class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 active:scale-95 shadow-md shadow-red-500/20"
+              style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)"
+            >
+              Refuser
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -201,6 +245,8 @@ onMounted(async () => {
 const statusStyle = {
   'Ouvert': { bg: '#DBEAFE', color: '#1D4ED8' },
   'En cours': { bg: '#FEF9C3', color: '#CA8A04' },
+  'Accepter': { bg: '#DCFCE7', color: '#16A34A' },
+  'Refuser': { bg: '#FEE2E2', color: '#DC2626' },
   'Résolu': { bg: '#DCFCE7', color: '#16A34A' },
 };
 
@@ -213,20 +259,26 @@ const stats = computed(() => [
   { label: 'Total Tickets', value: tickets.value.length, color: '#4F5CF5', bg: 'rgba(79, 92, 245, 0.1)', icon: TicketIcon },
   { label: 'Attente', value: tickets.value.filter(t => t.status === 'Ouvert').length, color: '#1D4ED8', bg: 'rgba(29, 78, 216, 0.1)', icon: Send },
   { label: 'En cours', value: tickets.value.filter(t => t.status === 'En cours').length, color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.1)', icon: Clock },
-  { label: 'Résolus', value: tickets.value.filter(t => t.status === 'Résolu').length, color: '#16A34A', bg: 'rgba(22, 163, 74, 0.1)', icon: CheckCircle },
+  { label: 'Acceptés', value: tickets.value.filter(t => t.status === 'Accepter').length, color: '#16A34A', bg: 'rgba(22, 163, 74, 0.1)', icon: CheckCircle },
 ]);
 
 // Map a raw API ticket object to the shape expected by the template
 function mapTicket(t) {
+  const moduleName = t.module?.intitule_cours || t.module?.code_cours || t.cours || t.module_name || ''
+
   return {
     id: t.id,
     titre: t.object_ticket || t.titre || '',
     expediteur: t.expediteur || 'Étudiant',
     role: t.role || 'Délégué',
-    cours: t.cours || '',
+    cours: moduleName,
+    description: t.description_ticket || t.description || '',
     date: t.cree_le_ticket || t.inserted_at || t.date || '',
+    // calculer le statut et verrouiller si finalisé
     status: formatStatus(t.statut_ticket || t.status || 'Ouvert'),
     statut_ticket: t.statut_ticket,
+    // locked indique que le ticket est finalisé (empêche changements ultérieurs)
+    locked: (function(s){ return ['Accepter','Refuser','Résolu'].includes(s)})(formatStatus(t.statut_ticket || t.status || 'Ouvert')),
     responses: mapResponses(t.commentaires),
   }
 }
@@ -241,12 +293,22 @@ function mapResponses(commentaires) {
   }))
 }
 
+// Avatar palette and deterministic color by name (copied from student Tickets design)
+const avatarPalette = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444']
+const commentAvatarColor = (name) => {
+  const n = String(name || '')
+  let hash = 0
+  for (let i = 0; i < n.length; i++) hash = n.charCodeAt(i) + ((hash << 5) - hash)
+  return avatarPalette[Math.abs(hash) % avatarPalette.length]
+}
+
 function formatStatus(raw) {
   if (!raw) return 'Ouvert'
   const s = raw.toString().toLowerCase()
   if (s.includes('en_attente') || s.includes('ouvert')) return 'Ouvert'
   if (s.includes('en_cours')) return 'En cours'
-  if (s.includes('acceptee') || s.includes('résolu') || s.includes('resolu')) return 'Résolu'
+  if (s.includes('acceptee') || s.includes('accepter')) return 'Accepter'
+  if (s.includes('refusee') || s.includes('refuser') || s.includes('rejetee') || s.includes('rejeter')) return 'Refuser'
   return raw
 }
 
@@ -297,13 +359,28 @@ function sendResponse() {
   }
 }
 
-function resolveTicket(ticketId) {
+function acceptTicket(ticketId) {
   const ticket = tickets.value.find(t => t.id === ticketId)
   if (ticket) {
-    ticket.status = 'Résolu'
+    // refuse/locked tickets cannot be accepted
+    if (ticket.locked || ticket.status === 'Refuser') return
+
+    ticket.status = 'Accepter'
+    ticket.locked = true
     // Persist to backend
     updateTicket(ticketId, { ticket: { statut_ticket: 'acceptee' } }).catch((e) => {
-      console.debug('resolveTicket API failed', e)
+      console.debug('acceptTicket API failed', e)
+    })
+  }
+}
+
+function refuseTicket(ticketId) {
+  const ticket = tickets.value.find(t => t.id === ticketId)
+  if (ticket) {
+    ticket.status = 'Refuser'
+    ticket.locked = true
+    updateTicket(ticketId, { ticket: { statut_ticket: 'refusee' } }).catch((e) => {
+      console.debug('refuseTicket API failed', e)
     })
   }
 }

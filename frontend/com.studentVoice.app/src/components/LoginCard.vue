@@ -3,9 +3,9 @@
     <div
       :style="{
         perspective: '1200px',
-        transform: `scale(${cardScale})`,
+        zoom: cardScale,
         transformOrigin: 'center center',
-        transition: 'transform 0.25s ease',
+        transition: 'zoom 0.25s ease',
       }"
     >
     <!-- Flip container -->
@@ -144,6 +144,9 @@ onUnmounted(() => {
 <style scoped>
 .login-card-container {
   animation: loginCardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 @keyframes loginCardEnter {

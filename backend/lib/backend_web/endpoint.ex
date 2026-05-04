@@ -40,7 +40,9 @@ defmodule BackendWeb.Endpoint do
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
     plug(Phoenix.CodeReloader)
-    plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :backend)
+    # Disabled: CheckRepoStatus falsely reports pending migrations on Windows
+    # even when `mix ecto.migrate` confirms all migrations are up.
+    # Re-enable if needed: plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :backend)
   end
 
   plug(Phoenix.LiveDashboard.RequestLogger,

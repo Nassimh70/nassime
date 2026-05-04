@@ -21,7 +21,7 @@
         </div>
         <div class="hidden md:block p-6">
           <div class="flex items-center gap-3">
-            <img src="/src/Asset/favicon.svg" alt="StudentVoice Logo" class="w-10 h-10" />
+            <img :src="profFavicon" alt="StudentVoice Logo" class="w-10 h-10" />
             <span class="font-bold text-xl text-gray-900">StudentVoice</span>
           </div>
         </div>
@@ -57,7 +57,7 @@
               <button
                 v-if="section.section === 'OUTILS'"
                 @click="logout"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300 text-gray-600 hover:bg-red-50 hover:text-red-600"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300 text-red-600 hover:bg-red-50 0 dark:hover:bg-red-900"
               >
                 <LogOut class="w-5 h-5" />
                 <span class="font-medium">Se déconnecter</span>
@@ -136,6 +136,8 @@
 <script setup>
 import Notification from '../components/Notification.vue';
 import ThemeToggle from '../components/ThemeToggle.vue';
+import profFavicon from '../Asset/Logo_Sv.png';
+
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { 
@@ -221,7 +223,7 @@ const navSections = [
   {
     section: 'OUTILS',
     items: [
-      { label: 'Profil', icon: User, path: '/prof/settings' },
+      { label: 'Profil', icon: User, path: '/prof/Profile' },
       { label: 'Aide', icon: HelpCircle, path: '/prof/help' },
     ],
   },
@@ -241,7 +243,7 @@ const pageTitle = computed(() => {
   if (path === '/prof/grades' || path === '/prof/GradeManagement') return { title: 'Gestion des Notes', subtitle: 'Gérez les notes de vos étudiants' };
   if (path === '/prof/announcements' || path === '/prof/annonces') return { title: 'Annonces', subtitle: 'Publications pédagogiques' };
   if (path === '/prof/tickets') return { title: 'Tickets', subtitle: 'Suivi des tickets soumis' };
-  if (path === '/prof/settings') return { title: 'Mon Profil', subtitle: 'Gérez vos informations personnelles' };
+  if (path === '/prof/Profile') return { title: 'Mon Profil', subtitle: 'Gérez vos informations personnelles' };
   if (path === '/prof/help') return { title: 'Aide', subtitle: 'Besoin d\'aide ?' };
   return { title: 'StudentVoice', subtitle: '' };
 });

@@ -12,8 +12,8 @@
     >
       <span class="flex items-center gap-2 truncate">
         <component
-          v-if="selected?.icon"
-          :is="selected.icon"
+          v-if="(selected && selected.icon) || icon"
+          :is="(selected && selected.icon) ? selected.icon : icon"
           class="w-4 h-4 text-[var(--muted-foreground)]"
         />
         <span
@@ -81,7 +81,8 @@ import { ChevronDown, Check } from 'lucide-vue-next'
 const props = defineProps({
   modelValue: [String, Number],
   options: { type: Array, required: true },
-  placeholder: { type: String, default: 'Select...' }
+  placeholder: { type: String, default: 'Select...' },
+  icon: { type: [Object, Function], default: null }
 })
 
 const emit = defineEmits(['update:modelValue'])

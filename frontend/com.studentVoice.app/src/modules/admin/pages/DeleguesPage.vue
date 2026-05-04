@@ -1,5 +1,20 @@
 <template>
   <div class="flex flex-col gap-4">
+    <!-- Toast notification -->
+    <Transition name="toast">
+      <div
+        v-if="toast.show"
+        class="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-sm font-medium"
+        :style="{
+          background: toast.type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)',
+          color: '#fff'
+        }"
+      >
+        <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5" />
+        <AlertCircle v-else class="w-5 h-5" />
+        <span>{{ toast.message }}</span>
+      </div>
+    </Transition>
     <!-- Stats Row -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
       <!-- Stats Cards -->
@@ -158,13 +173,37 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <Transition name="modal">
+      <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Révoquer le délégué</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm mb-6">Êtes-vous sûr de vouloir révoquer le statut de délégué de cet étudiant ? Il redeviendra un étudiant normal.</p>
+          <div class="flex gap-3 justify-end">
+            <button
+              @click="showDeleteModal = false"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              @click="confirmDelete"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20"
+            >
+              Révoquer
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
 import { onBeforeRouteUpdate } from 'vue-router'
-import { UserCheck, Plus, Trash2, Mail, Phone, BookOpen, Star, CheckCircle, FileText } from 'lucide-vue-next';
+import { UserCheck, Plus, Trash2, Mail, Phone, BookOpen, Star, CheckCircle, FileText, AlertCircle } from 'lucide-vue-next';
 import CustomSelect from '../../../components/CustomSelect.vue'
 import { listUsers, designateDelegate, createEtudiant } from '../../../composables/useAdmin'
 
@@ -188,8 +227,10 @@ const delegues = ref([]);
 
 function handleAuthError(err) {
   if (err && err.status === 401) {
-    window.alert('Session expirée ou non autorisée. Veuillez vous reconnecter en tant qu\'admin.')
-    window.location.href = '/home/login'
+    showToast('Session expirée ou non autorisée. Veuillez vous reconnecter en tant qu\'admin.', 'error')
+    setTimeout(() => {
+      window.location.href = '/home/login'
+    }, 1500)
     return true
   }
   return false
@@ -239,6 +280,32 @@ const searchResults = ref([])
 const searching = ref(false)
 const searched = ref(false)
 
+// Toast
+const toast = ref({ show: false, message: '', type: 'success' })
+function showToast(message, type = 'success') {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
+// Delete Modal
+const showDeleteModal = ref(false)
+const deletingDelegueId = ref(null)
+const confirmDelete = async () => {
+  if (deletingDelegueId.value) {
+    try {
+      await designateDelegate(deletingDelegueId.value, { delegue: false });
+      delegues.value = delegues.value.filter(d => d.id !== deletingDelegueId.value);
+      showToast('Statut de délégué révoké avec succès !')
+    } catch (e) {
+      console.error('Erreur lors de la révocation du délégué', e);
+      if (handleAuthError(e)) return;
+      showToast('Erreur lors de la révocation du statut de délégué.', 'error');
+    }
+  }
+  showDeleteModal.value = false
+  deletingDelegueId.value = null
+}
+
 const stats = computed(() => {
   // Count delegates by either `actif` flag or role containing 'deleg'
   const delegatesCount = delegues.value.filter(d => {
@@ -265,16 +332,8 @@ const toggle = async (id) => {
 };
 
 const remove = async (id) => {
-  if (confirm("Voulez-vous révoquer le statut de délégué de cet étudiant ? Il redeviendra un étudiant normal.")) {
-    try {
-      await designateDelegate(id, { delegue: false });
-      delegues.value = delegues.value.filter(d => d.id !== id);
-    } catch (e) {
-      console.error('Erreur lors de la révocation du délégué', e);
-      if (handleAuthError(e)) return;
-      alert("Erreur lors de la révocation du statut de délégué.");
-    }
-  }
+  deletingDelegueId.value = id
+  showDeleteModal.value = true
 };
 
 const add = async () => {
@@ -330,7 +389,13 @@ const search = async () => {
       const email = (u.email || u.email_utilisateurs || '').toLowerCase()
       const matchesNom = qNom ? fullname.includes(qNom) || (u.prenom_utilisateurs || '').toLowerCase().includes(qNom) : true
       const matchesEmail = qEmail ? email.includes(qEmail) : true
-      return matchesNom && matchesEmail
+      
+      // Filter to only show students (etudiant), exclude professors (prof)
+      const roleRaw = (u.role && (u.role.nom_roles || u.role)) || ''
+      const roleNormalized = roleRaw.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+      const isStudent = roleNormalized.includes('etudiant') || (!roleNormalized.includes('prof') && !roleNormalized.includes('enseignant'))
+      
+      return matchesNom && matchesEmail && isStudent
     })
 
     searchResults.value = filtered
@@ -354,12 +419,8 @@ const designateExisting = async (user) => {
     // Optimistic UI update: mark the user as actif in local delegues mapping
     const local = delegues.value.find(d => d.id === user.id)
     if (local) local.actif = true
-    // Basic feedback for debugging / UX
-    if (res && (res.data || res.status === 'ok' || res.message)) {
-      window.alert('Désignation effectuée')
-    } else {
-      window.alert('Désignation envoyée — vérifier la console pour la réponse')
-    }
+    // Show success toast
+    showToast('Délégué désigné avec succès !')
     await loadDelegues(true)
     // Additional debug: fetch raw users list from API and log the specific utilisateur
     try {
@@ -382,7 +443,45 @@ const designateExisting = async (user) => {
     console.error('[designateExisting] error response:', err?.response)
     if (handleAuthError(err)) return
     const errorMsg = err?.message || (err?.response ? JSON.stringify(err.response) : JSON.stringify(err))
-    window.alert('Erreur lors de la désignation : ' + errorMsg)
+    showToast('Erreur lors de la désignation : ' + errorMsg, 'error')
   }
 }
 </script>
+
+<style scoped>
+/* Toast transition */
+.toast-enter-active {
+  transition: all 0.35s ease-out;
+}
+.toast-leave-active {
+  transition: all 0.25s ease-in;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.97);
+}
+
+/* Modal transition */
+.modal-enter-active {
+  transition: all 0.3s ease-out;
+}
+.modal-leave-active {
+  transition: all 0.2s ease-in;
+}
+.modal-enter-from {
+  opacity: 0;
+}
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from > div {
+  transform: scale(0.95);
+}
+.modal-leave-to > div {
+  transform: scale(0.97);
+}
+</style>

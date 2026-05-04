@@ -20,14 +20,14 @@
             <X class="w-5 h-5" />
           </button>
         </div>
-        <div class="hidden md:block p-6">
+         <div class="hidden md:block p-6 mb-2">
           <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold">
-              SV</div>
+            <img :src="studentFavicon" alt="StudentVoice Logo" class="w-10 h-10" />
             <span class="font-bold text-xl text-gray-900">StudentVoice</span>
           </div>
         </div>
+
+
 
         <div class="px-4 mb-4">
           <div
@@ -39,7 +39,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18);">
-                  <Shield class="w-4 h-4 text-white/90" />
+                  <User2 class="w-4 h-4 text-white/90" />
                 </div>
                 <div class="flex flex-col items-start gap-0.5">
                   <span class="text-[10px] uppercase tracking-widest text-white/50">Rôle actuel</span>
@@ -80,7 +80,8 @@
               </RouterLink>
               <!-- Logout button in OUTILS section -->
               <button v-if="section.section === 'OUTILS'" @click="logout"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300 text-gray-600 hover:bg-red-50 hover:text-red-600">
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300 text-red-600 hover:bg-red-50 0 dark:hover:bg-red-900">
+                
                 <LogOut class="w-5 h-5" />
                 <span class="font-medium">Se déconnecter</span>
               </button>
@@ -151,19 +152,21 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import {
   LayoutDashboard,
   Shield,
+  User2,
+  User,
   Ticket,
   ArrowUpDown,
   BookOpen,
   MessageSquare,
   Lightbulb,
   Megaphone,
-  User,
   LogOut,
   Menu,
   X,
   HelpCircle,
 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
+import studentFavicon from '../Asset/Logo_Sv.png';
 
 const route = useRoute()
 const navContainer = ref(null)

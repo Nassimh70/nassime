@@ -81,6 +81,10 @@ defmodule BackendWeb.TicketController do
     ticket = Support.get_ticket!(id)
     current = conn.assigns.account
 
+    unless can_comment?(current) do
+      raise(BackendWeb.Auth.ErrorResponse.Forbidden)
+    end
+
     params =
       commentaire_params
       |> Map.put("ticket_id", ticket.id)
@@ -316,8 +320,14 @@ defmodule BackendWeb.TicketController do
     account.id == ticket.utilisateur_id or admin?(account) or professeur?(account)
   end
 
+  defp can_comment?(account) do
+    admin?(account) or professeur?(account) or delegue?(account) or not etudiant?(account)
+  end
+
   defp admin?(account), do: role?(account, ["admin", "administration"])
   defp professeur?(account), do: role?(account, ["professeur"])
+  defp delegue?(account), do: role?(account, ["delegue"])
+  defp etudiant?(account), do: role?(account, ["etudiant"])
 
   defp role?(%{role: %{nom_roles: role}}, allowed_roles) when is_binary(role) do
     String.downcase(role) in allowed_roles

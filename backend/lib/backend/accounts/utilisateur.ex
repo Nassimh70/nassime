@@ -88,14 +88,14 @@ defmodule Backend.Accounts.Utilisateur do
   end
 
   defp hash_password(%Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset) do
-    change(changeset, mot_de_pass_utilisateurs: Bcrypt.hash_pwd_salt(password, log_rounds: 10))
+    change(changeset, mot_de_pass_utilisateurs: Backend.Auth.PasswordManager.hash_pwd_salt(password))
   end
 
   defp hash_password(changeset), do: changeset
 
   defp maybe_hash_password(%Ecto.Changeset{changes: %{password: password}} = changeset)
        when is_binary(password) do
-    change(changeset, mot_de_pass_utilisateurs: Bcrypt.hash_pwd_salt(password, log_rounds: 10))
+    change(changeset, mot_de_pass_utilisateurs: Backend.Auth.PasswordManager.hash_pwd_salt(password))
   end
 
   defp maybe_hash_password(changeset), do: changeset

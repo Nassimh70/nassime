@@ -6,7 +6,6 @@ defmodule Backend.Accounts do
   alias Backend.Repo
 
   alias Backend.Accounts.Role
-  alias Backend.Academics
 
   @doc """
   Returns the list of roles.
@@ -641,7 +640,7 @@ defmodule Backend.Accounts do
                     |> Repo.insert!()
                   g -> g
                 end
-              
+
               # Assign student to this group
               student |> Etudiant.changeset(%{groupe_id: g.id}) |> Repo.update!()
               g

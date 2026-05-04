@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col lg:flex-row gap-6 h-full" style="--blue: #255fe3; --blue-dark: #1f54d2; --blue-deep: #1d3f95">
+  <div class="flex flex-col 2xl:flex-row gap-6 h-full" style="--blue: #255fe3; --blue-dark: #1f54d2; --blue-deep: #1d3f95">
     <!-- Left Column -->
     <div class="flex-1 flex flex-col gap-6 min-w-0">
       <!-- Stats Cards - 4 columns -->
@@ -11,7 +11,7 @@
           <!-- Icon & Badge -->
           <div class="flex items-start justify-between mb-4">
             <div class="p-3 rounded-xl bg-white/10">
-              <FileText class="w-6 h-6 text-white" />
+              <FileText class="w-6 h-6 text-white" /> 
             </div>
             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white">{{ stats[0].change }}</span>
           </div>

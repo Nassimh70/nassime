@@ -54,8 +54,8 @@
                 </div>
               </div>
               <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Filière</p>
-                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ u.filiere }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ u.role === 'Professeur' ? 'Grade' : 'Groupe' }}</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ u.role === 'Professeur' ? (u.grade || 'N/A') : (u.filiere || 'N/A') }}</p>
               </div>
               <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Réclamations</p>
@@ -122,6 +122,7 @@ async function loadUsers(force = true) {
           email: u.email || u.email_utilisateurs || '',
           role: roleDisplay,
           filiere: u.filiere || '',
+          grade: u.grade || '',
           status: u.status || 'Actif',
           reclamations: u.reclamations || 0
         }

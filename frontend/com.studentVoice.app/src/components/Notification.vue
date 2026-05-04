@@ -72,7 +72,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { Bell, FileText, CheckCircle, Ticket, AlertTriangle, User } from 'lucide-vue-next'
+import { Bell, FileText, CheckCircle, Ticket, AlertTriangle, User, Lightbulb, Megaphone } from 'lucide-vue-next'
 import { getNotifications } from '../composables/useNotifications'
 
 // ─── État ───────────────────────────────────────────────
@@ -89,6 +89,8 @@ const TYPE_MAP = {
   reclamation: { icon: FileText, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', typeColor: 'text-blue-600', label: 'Réclamation' },
   urgent: { icon: AlertTriangle, iconBg: 'bg-red-100', iconColor: 'text-red-600', typeColor: 'text-red-600', label: 'Urgent' },
   delegue: { icon: User, iconBg: 'bg-purple-100', iconColor: 'text-purple-600', typeColor: 'text-purple-600', label: 'Délégué' },
+  nouvelle_souggestion: { icon: Lightbulb, iconBg: 'bg-purple-100', iconColor: 'text-purple-600', typeColor: 'text-purple-600', label: 'Suggestion' },
+  annonce_publie: { icon: Megaphone, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', typeColor: 'text-blue-600', label: 'Annonce' },
 }
 
 function humanizeTime(dateString) {

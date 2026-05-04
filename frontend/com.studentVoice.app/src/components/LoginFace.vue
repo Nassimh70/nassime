@@ -39,26 +39,13 @@
           </div>
         <Field 
           id="email" 
-          label="Email ou identifiant" 
+          label="Email professionnel" 
           v-model="email"
           placeholder="" 
           :icon="IconEmail"
         />
 
         <PasswordField id="password" label="Mot de passe" v-model="password" />
-
-        <!-- Forgot password -->
-        <div class="flex justify-end" :style="{ marginTop: '-8px' }">
-          <a
-            href="#"
-            class="text-xs transition-colors duration-200"
-            :style="{ color: '#255fe3' }"
-            @mouseenter="(e) => (e.currentTarget.style.color = '#1f54d2')"
-            @mouseleave="(e) => (e.currentTarget.style.color = '#255fe3')"
-          >
-            Mot de passe oublié ?
-          </a>
-        </div>
 
         <!-- Remember me -->
         <div class="flex items-center gap-2.5">
@@ -103,7 +90,6 @@
         </button>
       </div>
     </div>
-    <SecurityBadge />
   </div>
 </template>
 
@@ -113,7 +99,6 @@ import { Mail, ArrowRight } from 'lucide-vue-next'
 import Field from './Field.vue'
 import PasswordField from './PasswordField.vue'
 import ActionButton from './ActionButton.vue'
-import SecurityBadge from './SecurityBadge.vue'
 import { useAuth } from '../composables/useAuth'
 import { useRouter } from 'vue-router'
 

@@ -2,7 +2,7 @@
   <div>
     <!-- Banner -->
     <div
-      class="relative px-8 pt-7 pb-6 text-center overflow-hidden"
+      class="relative px-8 pt-5 pb-4 text-center overflow-hidden"
       :style="{ background: bannerGradient, transition: 'background 0.5s ease' }"
     >
       <div
@@ -34,16 +34,16 @@
       </button>
 
       <div
-        class="relative inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-2 mt-1"
+        class="relative inline-flex items-center justify-center w-10 h-10 rounded-xl mb-2 mt-1"
         :style="{
           background: 'rgba(255,255,255,0.18)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.25)',
         }"
       >
-        <GraduationCap v-if="role === 'etudiant'" :size="24" stroke="white"  />
-        <Briefcase v-else-if="role === 'enseignant'" :size="24" stroke="white" />
-        <User v-else :size="24" stroke="white" stroke-width="1.8" />
+        <GraduationCap v-if="role === 'etudiant'" :size="20" stroke="white"  />
+        <Briefcase v-else-if="role === 'enseignant'" :size="20" stroke="white" />
+        <User v-else :size="20" stroke="white" stroke-width="1.8" />
       </div>
       <h1 class="text-white text-lg mb-0.5" :style="{ fontWeight: 700, letterSpacing: '-0.02em' }">Créer un compte</h1>
       <p class="text-white text-xs" :style="{ opacity: 0.8 }">
@@ -103,25 +103,50 @@
 
           <!-- Role-specific fields -->
           <template v-if="role === 'etudiant'">
-            <Field id="groupe" label="Groupe" v-model="groupe" placeholder="" :icon="IconId" />
-            <Field id="dateNaissance" label="Date de naissance" v-model="dateNaissance" type="date" :icon="IconId" />
-            <Field id="telephoneEtudiant" label="Téléphone" v-model="telephoneEtudiant" placeholder="Ex: 0550xxxxxx" :icon="IconId" />
+            <div class="grid grid-cols-2 gap-3">
+              <div class="flex flex-col w-full" :style="{ paddingTop: '18px' }">
+                <label class="absolute pointer-events-none text-xs uppercase font-semibold text-slate-500 tracking-[0.07em]" :style="{ marginBottom: '10px' }">
+                </label>
+                <CustomSelect 
+                  id="groupe" 
+                  :model-value="groupe" 
+                  @update:model-value="groupe = $event"
+                  :options="groupeOptions"
+                  placeholder="Groupe"
+                  :icon="Users"
+                />
+              </div>
+              <Field id="dateNaissance" label="Date de naissance" v-model="dateNaissance" type="date" :icon="Calendar" placeholder="" :floating="false" />    
+            </div>
+            <Field id="telephoneEtudiant" label="Téléphone" v-model="telephoneEtudiant" placeholder="" :icon="Phone" />
           </template>
-
           <template v-else-if="role === 'enseignant'">
-            <Field
-              id="grade"
-              label="Grade / Spécialité"
-              v-model="grade"
-              placeholder=""
-              :icon="IconStar"
-            />
-            <Field id="specialite" label="Spécialité" v-model="specialite" placeholder="" :icon="IconStar" />
-            <Field id="telephoneProf" label="Téléphone" v-model="telephoneProf" placeholder="Ex: 0550xxxxxx" :icon="IconId" />
+            <div class="grid grid-cols-2 gap-3">
+              <CustomSelect
+                id="grade"
+                :model-value="grade"
+                @update:model-value="grade = $event"
+                :options="gradeOptions"
+                placeholder="Grade"
+                :icon="Award"
+              />
+              <CustomSelect
+                id="specialite"
+                :model-value="specialite"
+                @update:model-value="specialite = $event"
+                :options="specialiteOptions"
+                placeholder="Spécialité"
+                :icon="Briefcase"
+              />
+            </div>
+            <Field id="telephoneProf" label="Téléphone"  v-model="telephoneProf" placeholder=""  :icon="Phone" />
           </template>
-
-          <PasswordField id="signup-password" label="Mot de passe" v-model="password" />
-          <PasswordField id="confirm-password" label="Confirmer le mot de passe" v-model="confirm" />
+          
+          <div class="grid grid-cols-2 gap-3">
+            <PasswordField id="signup-password" label="Mot de passe" v-model="password" />
+           <PasswordField id="confirm-password" label="Confirmer le mot de passe" v-model="confirm" />
+          </div>
+          
 
           <div v-if="confirm.length > 0" class="flex items-center gap-2 text-xs" :style="{ color: confirm === password ? '#16a34a' : '#dc2626' }">
             <svg v-if="confirm === password" width="13" height="13" viewBox="0 0 24 24" fill="none">
@@ -149,7 +174,6 @@
       </p>
     </div>
 
-    <SecurityBadge />
   </div>
 </template>
 
@@ -164,14 +188,19 @@ import {
   Book,
   Wrench,
   Star,
+  Users,
   Check,
   ArrowLeft,
+  Award,
+  Calendar,
+  Phone,
+  MapPin,
 } from 'lucide-vue-next'
 import Field from './Field.vue'
 import PasswordField from './PasswordField.vue'
 import ActionButton from './ActionButton.vue'
 import RoleCard from './RoleCard.vue'
-import SecurityBadge from './SecurityBadge.vue'
+import CustomSelect from './CustomSelect.vue'
 import { useAuth } from '../composables/useAuth'
 import { useRouter } from 'vue-router'
 
@@ -189,6 +218,7 @@ const dateNaissance = ref('')
 const telephoneEtudiant = ref('')
 const specialite = ref('')
 const telephoneProf = ref('')
+const adresseProf = ref('')
 
 const bannerGradient = computed(() => {
   if (role.value === 'etudiant') return 'linear-gradient(135deg,#0f7069 0%,#0d9084 60%,#13b3a1 100%)'
@@ -212,6 +242,31 @@ const IconBuild = Wrench
 const IconStar = Star
 const IconCheck = Check
 const IconBack = ArrowLeft
+
+// Options for groupe select
+const groupeOptions = [
+  { label: 'INFO3 - A1', value: 'A1' },
+  { label: 'INFO3 - A2', value: 'A2' },
+  { label: 'INFO3 - A3', value: 'A3' },
+  { label: 'INFO3 - A4', value: 'A4' },
+]
+
+// Options pour les champs enseignant
+const gradeOptions = [
+  { label: "Maître de conférences", value: "maitre_de_conferences" },
+  { label: "Professeur", value: "professeur" },
+  { label: "Assistant", value: "assistant" },
+  { label: "Chargé de cours", value: "charge_de_cours" },
+]
+
+const specialiteOptions = [
+  { label: "Genie de Logiciel", value: "genie_de_logiciel" },
+  { label: "Intelligence Artificielle", value: "intelligence_artificielle" },
+  { label: "Cyber sécurité", value: "cyber_securite" },
+  { label: "Administration Reseaux", value: "administration_reseaux" },
+  { label: "Data engineering", value: "data_engineering" },
+  { label: "Informatique Industrielle", value: "informatique_industrielle" },
+]
 
 defineEmits([
   'flip'
@@ -318,7 +373,7 @@ const handleSubmit = async () => {
   }
 }
 
-// clear error when any main field changes
+// clear error when any main field changes, adresseProf
 watch([prenom, nom, email, password, confirm, grade, groupe, dateNaissance, telephoneEtudiant, specialite, telephoneProf], () => {
   if (error.value) error.value = ''
 })

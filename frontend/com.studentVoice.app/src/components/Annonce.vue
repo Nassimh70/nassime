@@ -1,28 +1,29 @@
 <template>
   <div class="announcements-page flex flex-col gap-4">
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    
+    <div v-if="!canPublish" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
       <div class="flex items-start gap-3">
         <Bell class="w-6 h-6 text-blue-600 flex-shrink-0" />
         <div>
-          <h3 class="font-semibold text-blue-900">Annonces Pédagogiques</h3>
-          <p class="text-sm text-blue-700 mt-1">
-            Les annonces sont publiées par l'administration, les professeurs et les délégués
+          <h3 class="font-semibold text-blue-900">Publication d'Annonces</h3>
+          <p class="text-sm text-blue-700 mt-1">Seuls les délégués, professeurs et administrateurs peuvent créer et publier des annonces.
           </p>
         </div>
       </div>
     </div>
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
   
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-3">
         <button
           v-for="f in filterButtons"
           :key="f.value"
           @click="activeFilter = f.value"
-          class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+          class="px-3 py-1.5 rounded-xl text-xs transition-all"
           :style="{
-            background: activeFilter === f.value ? f.activeColor : f.bg,
+            background: activeFilter === f.value ? f.gradient : f.bg,
             color: activeFilter === f.value ? '#FFFFFF' : f.color,
-            boxShadow: activeFilter === f.value ? f.shadow : 'none',
+            fontWeight: 600,
+            boxShadow: activeFilter === f.value ? f.shadow : '0 1px 4px rgba(0,0,0,0.08)',
           }"
         >
           {{ f.label }}
@@ -56,18 +57,27 @@
         />
         <textarea v-model="form.contenu" placeholder="Contenu de l'annonce*" rows="3" class="col-span-2 resize-none"></textarea>
       </div>
-      <div class="flex gap-2">
-        <button @click="addAnnonce" class="publish-btn px-4 py-2 rounded-xl text-sm transition-all hover:opacity-90 active:scale-95">Publier</button>
-        <button @click="showForm = false" class="cancel-btn px-4 py-2 rounded-xl text-sm">Annuler</button>
-      </div>
+              <div class="flex gap-3 justify-end">
+          <button 
+            @click="showForm = false" 
+            class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+            :style="{ background: 'rgba(99, 102, 241, 0.08)', color: '#6366f1' }"
+          >
+            Annuler
+          </button>
+          <button 
+            @click="addAnnonce" 
+            class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
+          >
+            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+            <Send v-else class="w-4 h-4" />
+            {{ submitting ? 'Publication...' : 'Publier' }}
+          </button>
+        </div>
     </div>
 
-    <!-- Information banner pour les utilisateurs sans permission -->
-    <div v-if="!canPublish" class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-      <h3 class="font-semibold text-orange-900">Publication d'Annonces</h3>
-      <p class="text-sm text-orange-700 mt-1">Seuls les délégués, professeurs et administrateurs peuvent créer et publier des annonces.</p>
-    </div>
-
+      
     <!-- Loading state -->
     <div v-if="loading" class="flex flex-col gap-3">
       <div v-for="n in 3" :key="n" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 animate-pulse">
@@ -154,7 +164,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { Bell, Plus, BookOpen, Calendar, User, ThumbsUp, Lock } from 'lucide-vue-next';
+import { Bell, Plus, BookOpen, Calendar, User, ThumbsUp, Lock,Send } from 'lucide-vue-next';
 import CustomSelect from './CustomSelect.vue'
 import { createAnnonce, listAnnonces, invalidateAnnoncesCache, voteAnnonce } from '../composables/useAnnonces'
 
@@ -182,10 +192,10 @@ const typeOptions = ref([
 
 // ─── Filter buttons ──────────────────────────────
 const filterButtons = ref([
-  { value: 'Toutes', label: 'Toutes', color: '#255fe3', bg: '#DEE2F0', activeColor: '#255fe3', shadow: '0 2px 8px rgba(37,95,227,0.25)' },
-  { value: 'Pédagogique', label: 'Pédagogique', color: '#4F5CF5', bg: '#F3F4FF', activeColor: '#4F5CF5', shadow: '0 2px 8px rgba(79,92,245,0.25)' },
-  { value: 'Administrative', label: 'Administrative', color: '#CA8A04', bg: '#FEF9C3', activeColor: '#CA8A04', shadow: '0 2px 8px rgba(202,138,4,0.25)' },
-  { value: 'Événement', label: 'Événement', color: '#16A34A', bg: '#DCFCE7', activeColor: '#16A34A', shadow: '0 2px 8px rgba(22,163,74,0.25)' },
+  { value: 'Toutes', label: 'Toutes', color: '#255fe3', bg: '#DEE2F0', gradient: 'linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%)', shadow: '0 2px 8px rgba(37,95,227,0.35)' },
+  { value: 'Pédagogique', label: 'Pédagogique', color: '#4F5CF5', bg: '#F3F4FF', gradient: 'linear-gradient(135deg, #3d48d9 0%, #4F5CF5 50%, #363fb5 100%)', shadow: '0 2px 8px rgba(79,92,245,0.35)' },
+  { value: 'Administrative', label: 'Administrative', color: '#CA8A04', bg: '#FEF9C3', gradient: 'linear-gradient(135deg, #b47d04 0%, #CA8A04 50%, #a16e03 100%)', shadow: '0 2px 8px rgba(202,138,4,0.35)' },
+  { value: 'Événement', label: 'Événement', color: '#16A34A', bg: '#DCFCE7', gradient: 'linear-gradient(135deg, #128c3e 0%, #16A34A 50%, #0f7a35 100%)', shadow: '0 2px 8px rgba(22,163,74,0.35)' },
 ])
 
 // ─── Normalize type for comparison ───────────────
@@ -222,6 +232,8 @@ const roleStyles = {
   'Délégué': { background: '#EDE9FE', color: '#7C3AED' },
   'Étudiant': { background: '#E0F2FE', color: '#0369A1' },
 }
+
+
 
 const voted = ref(new Set());
 const voteCounts = reactive({})

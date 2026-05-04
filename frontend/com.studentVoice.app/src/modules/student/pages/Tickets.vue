@@ -39,7 +39,11 @@
           />
           <div v-else></div>
           <input v-model="formData.ticketSubject" placeholder="Sujet du ticket*" class="col-span-1 sm:col-span-2" />
-          <input v-model="formData.ticketCategory" placeholder="Catégorie" />
+          <CustomSelect
+            v-model="formData.ticketCategory"
+            :options="categoryOptions"
+            placeholder="Sélectionner une catégorie"
+          />
           <CustomSelect
             v-model="formData.ticketPriority"
             :options="priorityOptions"
@@ -118,12 +122,13 @@
               <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">{{ ticket.description }}</p>
               <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-500">
                 <span
-                  class="px-2.5 py-0.5 rounded text-xs font-semibold border"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold border"
                   :class="ticket.type === 'administration'
                     ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700'
                     : 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700'"
                 >
-                  {{ ticket.type === 'administration' ? '🏛 Administration' : '👨‍🏫 Professeur' }}
+                  <component :is="ticket.type === 'administration' ? Shield : BookOpen" class="w-3.5 h-3.5" />
+                  {{ ticket.type === 'administration' ? 'Administration' : 'Professeur' }}
                 </span>
                 <span class="px-2.5 py-0.5 bg-gray-100 dark:bg-slate-900 text-gray-700 dark:text-gray-300 rounded text-xs font-medium border border-gray-200 dark:border-slate-700">
                   {{ ticket.category }}
@@ -142,7 +147,7 @@
           <div class="flex items-center gap-2 pt-4 border-t border-gray-100">
 
             <button
-              v-if="ticket.status !== 'Résolu' && ticket.status !== 'Fermé'"
+              v-if="isDelegate"
               @click="openCommentForm(ticket)"
               class="group flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:scale-95"
             >
@@ -175,12 +180,13 @@
                     {{ priorityConfig[selectedTicket.priority].label }}
                   </div>
                   <span
-                    class="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
                     :class="selectedTicket.type === 'administration'
                       ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700'
                       : 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700'"
                   >
-                    {{ selectedTicket.type === 'administration' ? '🏛 Administration' : '👨‍🏫 Professeur' }}
+                    <component :is="selectedTicket.type === 'administration' ? Shield : BookOpen" class="w-3.5 h-3.5" />
+                    {{ selectedTicket.type === 'administration' ? 'Administration' : 'Professeur' }}
                   </span>
                 </div>
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white leading-snug">{{ selectedTicket.subject }}</h2>
@@ -261,8 +267,8 @@
             </div>
           </div>
 
-          <!-- Sticky Comment Input Bar -->
-          <div v-if="selectedTicket.status !== 'Résolu' && selectedTicket.status !== 'Fermé'" class="border-t border-gray-100 dark:border-slate-700 px-7 py-4 bg-gray-50/50 dark:bg-slate-900/50">
+          <!-- Sticky Comment Input Bar (students cannot comment on administration-targeted tickets) -->
+          <div v-if="canSendComment(selectedTicket)" class="border-t border-gray-100 dark:border-slate-700 px-7 py-4 bg-gray-50/50 dark:bg-slate-900/50">
             <div class="flex items-end gap-3">
               <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 V
@@ -291,9 +297,19 @@
             </div>
           </div>
 
+          <!-- Administration-targeted ticket (comments disabled for students; show admin motif if any) -->
+          <div v-else-if="!isDelegate && !isTicketLocked(selectedTicket)" class="border-t border-gray-100 px-7 py-3 bg-gray-50/50 text-center">
+            <span class="text-sm text-gray-600">Vous pouvez consulter ce ticket et son statut. Les commentaires sont réservés aux délégués.</span>
+          </div>
+
+          <!-- Administration-targeted ticket (comments disabled for students; show admin motif if any) -->
+          <div v-else-if="!isTicketLocked(selectedTicket) && selectedTicket.type === 'administration'" class="border-t border-gray-100 px-7 py-3 bg-gray-50/50 text-center">
+            <span class="text-sm text-gray-600">Ce ticket est destiné à l'administration — vous ne pouvez pas ajouter de commentaires. Vous pouvez consulter le motif fourni par l'administration dans le fil de discussion.</span>
+          </div>
+
           <!-- Closed ticket footer -->
           <div v-else class="border-t border-gray-100 px-7 py-3 bg-gray-50/50 text-center">
-            <span class="text-xs text-gray-400 font-medium">Ce ticket est {{ selectedTicket.status.toLowerCase() }} — commentaires désactivés</span>
+            <span class="text-xs text-gray-400 font-medium">Ce ticket est {{ selectedTicket.status.toLowerCase() }} — vous pouvez voir l'historique, mais les commentaires sont désactivés</span>
           </div>
 
         </div>
@@ -304,7 +320,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Ticket as TicketIcon, Plus, Search, Clock, AlertCircle, AlertTriangle, CheckCircle, MessageCircleMore, Lock, Eye, X, Send, Building2, GraduationCap } from 'lucide-vue-next'
+import { Ticket as TicketIcon, Plus, Search, Clock, AlertCircle, AlertTriangle, CheckCircle, MessageCircleMore, Lock, X, Send, Shield, BookOpen } from 'lucide-vue-next'
 import { useAuth } from '../../../composables/useAuth'
 import CustomSelect from '../../../components/CustomSelect.vue'
 import { listTickets, createTicket, getTicket, addTicketComment, getTicketComments } from '../../../composables/useTickets'
@@ -347,9 +363,17 @@ const priorityOptions = [
 ]
 
 const destinataireOptions = [
-  { value: 'administration', label: 'Administration', icon: Building2, dot: '#8b5cf6' },
-  { value: 'professeur', label: 'Professeur', icon: GraduationCap, dot: '#14b8a6' },
+  { value: 'administration', label: 'Administration', icon: Shield, dot: '#8b5cf6' },
+  { value: 'professeur', label: 'Professeur', icon: BookOpen, dot: '#14b8a6' },
 ]
+
+const categoryOptions = ref([
+  { value: 'Infrastructure', label: 'Infrastructure', dot: '#f59e0b', gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' },
+  { value: 'Formation', label: 'Module', dot: '#10b981', gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)' },
+  { value: 'Vie étudiante', label: 'Vie étudiante', dot: '#ec4899', gradient: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #be185d 100%)' },
+  { value: 'Services', label: 'Services', dot: '#8b5cf6', gradient: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #6d28d9 100%)' },
+  { value: 'Général', label: 'Général', dot: '#64748b', gradient: 'linear-gradient(135deg, #475569 0%, #64748b 50%, #334155 100%)' },
+])
 
 const moduleOptions = computed(() =>
   modules.value.map(m => ({
@@ -360,10 +384,9 @@ const moduleOptions = computed(() =>
 
 const statusFilterOptions = [
   { value: 'all', label: 'Tous les statuts' },
-  { value: 'Ouvert', label: 'Ouvert', dot: '#3b82f6' },
-  { value: 'En cours', label: 'En cours', dot: '#f97316' },
-  { value: 'Résolu', label: 'Résolu', dot: '#22c55e' },
-  { value: 'Fermé', label: 'Fermé', dot: '#6b7280' },
+  { value: 'En attente', label: 'En attente', dot: '#3b82f6' },
+  { value: 'Accepter', label: 'Accepter', dot: '#22c55e' },
+  { value: 'Refuser', label: 'Refuser', dot: '#ef4444' },
 ]
 
 // Tickets Data
@@ -400,7 +423,7 @@ const addTicket = async () => {
           id: t.id,
           subject: t.object_ticket,
           description: t.description_ticket,
-          status: t.statut_ticket || 'Ouvert',
+          status: normalizeStatus(t.statut_ticket),
           priority: t.priorite_ticket || 'low',
           createdAt: t.cree_le_ticket || t.inserted_at,
           category: t.categorie_ticket || '',
@@ -431,10 +454,11 @@ const openDetails = async (ticket) => {
         id: t.id,
         subject: t.object_ticket,
         description: t.description_ticket,
-        status: t.statut_ticket,
+        status: normalizeStatus(t.statut_ticket),
         priority: t.priorite_ticket,
         createdAt: t.cree_le_ticket || t.inserted_at,
         category: t.categorie_ticket,
+        type: t.type_ticket || t.type,
         comments: mapComments(t.commentaires)
       }
       showDetails.value = true
@@ -456,10 +480,11 @@ const openCommentForm = async (ticket) => {
         id: t.id,
         subject: t.object_ticket,
         description: t.description_ticket,
-        status: t.statut_ticket,
+        status: normalizeStatus(t.statut_ticket),
         priority: t.priorite_ticket,
         createdAt: t.cree_le_ticket || t.inserted_at,
         category: t.categorie_ticket,
+        type: t.type_ticket || t.type,
         comments: mapComments(t.commentaires)
       }
     } else {
@@ -470,9 +495,13 @@ const openCommentForm = async (ticket) => {
     selectedTicket.value = ticket
   }
   showDetails.value = true
-}
+} 
 
 const addComment = async () => {
+  if (!canSendComment(selectedTicket.value) || !newComment.value.trim() || !selectedTicket.value) {
+    return
+  }
+
   if (newComment.value.trim() && selectedTicket.value) {
     try {
       const res = await addTicketComment(selectedTicket.value.id, { commentaire: { contenu_commentaires: newComment.value } })
@@ -531,9 +560,9 @@ const autoResize = (e) => {
 
 // Stats Computed
 const ticketStats = computed(() => [
-  { label: 'Ouverts', value: tickets.value.filter((t) => t.status === 'Ouvert' || t.status === 'en_attente').length, icon: TicketIcon, color: 'bg-blue-100 text-blue-600' },
-  { label: 'En cours', value: tickets.value.filter((t) => t.status === 'En cours' || t.status === 'en_cours').length, icon: Clock, color: 'bg-orange-100 text-orange-600' },
-  { label: 'Résolus', value: tickets.value.filter((t) => t.status === 'Résolu' || t.status === 'acceptee' || t.status === 'refusee').length, icon: CheckCircle, color: 'bg-green-100 text-green-600' },
+  { label: 'Attente', value: tickets.value.filter((t) => normalizeStatus(t.status) === 'En attente').length, icon: TicketIcon, color: 'bg-blue-100 text-blue-600' },
+  { label: 'Accepter', value: tickets.value.filter((t) => normalizeStatus(t.status) === 'Accepter').length, icon: Clock, color: 'bg-orange-100 text-orange-600' },
+  { label: 'Refuser', value: tickets.value.filter((t) => normalizeStatus(t.status) === 'Refuser').length, icon: CheckCircle, color: 'bg-green-100 text-green-600' },
 ])
 
 onMounted(async () => {
@@ -545,7 +574,7 @@ onMounted(async () => {
         id: t.id,
         subject: t.object_ticket,
         description: t.description_ticket,
-        status: t.statut_ticket,
+        status: normalizeStatus(t.statut_ticket),
         priority: t.priorite_ticket,
         createdAt: t.cree_le_ticket || t.inserted_at,
         category: t.categorie_ticket,
@@ -575,10 +604,9 @@ onMounted(async () => {
 // Status Colors
 const statusColors = {
   // Tickets
-  'Ouvert': 'bg-blue-100 text-blue-700 border-blue-200',
-  'En cours': 'bg-orange-100 text-orange-700 border-orange-200',
-  'Résolu': 'bg-green-100 text-green-700 border-green-200',
-  'Fermé': 'bg-gray-100 text-gray-700 border-gray-200',
+  'En attente': 'bg-blue-100 text-blue-700 border-blue-200',
+  'Accepter': 'bg-green-100 text-green-700 border-green-200',
+  'Refuser': 'bg-red-100 text-red-700 border-red-200',
 }
 
 const priorityBadges = {
@@ -587,16 +615,38 @@ const priorityBadges = {
   low: 'bg-gray-100 text-gray-700',
 }
 
+function normalizeStatus(rawStatus) {
+  if (!rawStatus) return 'En attente'
+
+  const status = String(rawStatus).toLowerCase().trim()
+
+  if (status.includes('en_attente') || status === 'ouvert') return 'En attente'
+  if (status.includes('acceptee') || status.includes('accepter') || status.includes('resolu') || status.includes('résolu')) return 'Accepter'
+  if (status.includes('refusee') || status.includes('refuser') || status === 'ferme' || status.includes('fermé')) return 'Refuser'
+
+  return 'En attente'
+}
+
 // Filtered Results
 const filteredTicketsData = computed(() =>
   tickets.value.filter((ticket) => {
-    const matchesStatus = filterStatusTicket.value === 'all' || ticket.status === filterStatusTicket.value
+    const matchesStatus = filterStatusTicket.value === 'all' || normalizeStatus(ticket.status) === filterStatusTicket.value
     const matchesSearch =
       ticket.subject.toLowerCase().includes(searchTermTicket.value.toLowerCase()) ||
       ticket.description.toLowerCase().includes(searchTermTicket.value.toLowerCase())
     return matchesStatus && matchesSearch
   })
 )
+
+function isTicketLocked(ticket) {
+  if (!ticket) return false
+  const status = normalizeStatus(ticket.status)
+  return status === 'Résolu' || status === 'Accepter' || status === 'Refuser'
+}
+
+function canSendComment(ticket) {
+  return Boolean(isDelegate.value && ticket && !isTicketLocked(ticket) && ticket.type !== 'administration')
+}
 </script>
 
 
@@ -639,3 +689,4 @@ const filteredTicketsData = computed(() =>
   background: transparent;
 }
 </style>
+ 

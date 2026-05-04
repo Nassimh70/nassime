@@ -93,6 +93,10 @@ const props = defineProps({
   icon: {
     type: [Object, Function],
     default: null
+  },
+  floating: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -101,7 +105,7 @@ const emit = defineEmits(['update:modelValue'])
 const focused = ref(false)
 const showPassword = ref(false)
 
-const active = computed(() => focused.value || (props.modelValue?.toString().length ?? 0) > 0)
+const active = computed(() => !props.floating || focused.value || (props.modelValue?.toString().length ?? 0) > 0)
 const inputType = computed(() => {
   if (props.type === 'password') {
     return showPassword.value ? 'text' : 'password'
