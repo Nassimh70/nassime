@@ -344,11 +344,20 @@ const applyUserToForm = (u) => {
 
   formData.value.dateOfBirth = u.dateNaissance || ''
 
-  if (u.groupe && u.groupe.libele) {
-    formData.value.groupe = u.groupe.libele
-    formData.value.class = u.groupe.libele
-    formData.value.filiere = u.groupe.filiere || ''
-    formData.value.niveau = u.groupe.niveau || ''
+  if (u.groupe) {
+    // Use libele (display name) first, fall back to code, then id
+    const groupeLabel = u.groupe.libele || u.groupe.code || u.groupe.libele_groupes || u.groupe.code_groupes || String(u.groupe.id || '')
+    formData.value.groupe = groupeLabel
+    formData.value.class  = groupeLabel
+    formData.value.filiere = u.groupe.filiere || u.groupe.filier_groupe || ''
+    formData.value.niveau  = u.groupe.niveau  || u.groupe.niveau_groupe  || ''
+  } else if (u.groupe_id) {
+    // groupe_id is set but the group object wasn't preloaded — show a readable fallback
+    formData.value.class  = `Groupe #${u.groupe_id}`
+    formData.value.groupe = `Groupe #${u.groupe_id}`
+  } else {
+    formData.value.class  = ''
+    formData.value.groupe = ''
   }
 
   formData.value.is_delegate = u.is_delegate || false

@@ -178,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import {
   GraduationCap,
   Briefcase,
@@ -243,13 +243,28 @@ const IconStar = Star
 const IconCheck = Check
 const IconBack = ArrowLeft
 
-// Options for groupe select
-const groupeOptions = [
+// Options for groupe select — loaded from API, fallback to hardcoded
+const groupeOptions = ref([
   { label: 'INFO3 - A1', value: 'A1' },
   { label: 'INFO3 - A2', value: 'A2' },
   { label: 'INFO3 - A3', value: 'A3' },
   { label: 'INFO3 - A4', value: 'A4' },
-]
+])
+
+onMounted(async () => {
+  try {
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
+    const res = await fetch(`${API_BASE}/api/meta`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.groupes && data.groupes.length > 0) {
+        groupeOptions.value = data.groupes
+      }
+    }
+  } catch (e) {
+    // keep fallback hardcoded options
+  }
+})
 
 // Options pour les champs enseignant
 const gradeOptions = [

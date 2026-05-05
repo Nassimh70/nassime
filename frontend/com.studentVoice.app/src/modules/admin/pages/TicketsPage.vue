@@ -288,7 +288,10 @@ onMounted(async () => {
     }, {})
 
     if (ticketsRes && ticketsRes.data) {
-      reclamations.value = ticketsRes.data.map(t => mapTicketWithUser(t, usersById))
+      // Only show tickets destined for administration
+      reclamations.value = ticketsRes.data
+        .filter(t => (t.type_ticket || '').toLowerCase() === 'administration')
+        .map(t => mapTicketWithUser(t, usersById))
     }
   } catch (err) {
     console.error('Failed to load admin tickets', err)
@@ -332,7 +335,9 @@ const handleAction = async (id, action) => {
     }, {})
 
     if (ticketsRes && ticketsRes.data) {
-      reclamations.value = ticketsRes.data.map(t => mapTicketWithUser(t, usersById))
+      reclamations.value = ticketsRes.data
+        .filter(t => (t.type_ticket || '').toLowerCase() === 'administration')
+        .map(t => mapTicketWithUser(t, usersById))
     }
   } catch (err) {
     console.error('Failed to update ticket status', err)

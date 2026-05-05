@@ -2,7 +2,21 @@ defmodule BackendWeb.MetaController do
   use BackendWeb, :controller
 
   def index(conn, _params) do
+    # Load real groups from DB
+    groupes =
+      Backend.Academics.list_groupes()
+      |> Enum.map(fn g ->
+        %{
+          value: g.code_groupes,
+          label: if(g.libele_groupes && g.libele_groupes != g.code_groupes,
+            do: "#{g.libele_groupes} - #{g.code_groupes}",
+            else: g.code_groupes
+          )
+        }
+      end)
+
     data = %{
+      groupes: groupes,
       annonce_types: [
         %{value: "info", label: "Information"},
         %{value: "cours", label: "Cours"},

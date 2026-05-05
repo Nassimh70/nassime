@@ -188,7 +188,7 @@ defmodule BackendWeb.TicketController do
 
         tickets =
           Ticket
-          |> where([t], t.module_id in ^module_ids)
+          |> where([t], t.module_id in ^module_ids and t.type_ticket == "professeur")
           |> Repo.all()
 
         json(conn, %{data: Enum.map(tickets, &ticket_payload/1)})

@@ -281,14 +281,31 @@ defmodule Backend.Accounts do
 
   """
   def create_etudiant(attrs, user_id) do
-    # Ignore group selection during signup to prevent automatic module attachment
-    # The student will be created with groupe_id: nil and attached by the professor later
+    # Extract group code sent by the frontend (e.g. "A1", "A2") before converting keys
+    groupe_code = Map.get(attrs, "groupe") || Map.get(attrs, :groupe)
+
+    # Resolve group code to a groupe_id by looking up the DB
+    groupe =
+      if groupe_code && to_string(groupe_code) != "" do
+        code = to_string(groupe_code)
+        # Try exact match on code_groupes first, then fall back to libele_groupes
+        case Repo.get_by(Backend.Academics.Groupe, code_groupes: code) do
+          nil -> Repo.get_by(Backend.Academics.Groupe, libele_groupes: code)
+          g -> g
+        end
+      else
+        nil
+      end
+
     attrs =
       attrs
       |> Map.put(:utilisateur_id, user_id)
       |> Map.delete(:groupe)
       |> Map.delete("groupe")
       |> Enum.into(%{}, fn {k, v} -> {String.to_atom(to_string(k)), v} end)
+
+    # Attach groupe_id only when a matching group was found in the DB
+    attrs = if groupe, do: Map.put(attrs, :groupe_id, groupe.id), else: attrs
 
     Repo.transaction(fn ->
       %Etudiant{}
