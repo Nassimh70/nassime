@@ -118,7 +118,7 @@ defmodule Backend.Accounts do
   """
   def list_utilisateurs do
     Repo.all(Utilisateur)
-    |> Repo.preload([:role, :tickets, etudiant: [:groupe]])
+    |> Repo.preload([:role, :tickets, :professeur, etudiant: [:groupe]])
   end
 
   @doc """
@@ -603,16 +603,61 @@ defmodule Backend.Accounts do
       nil ->
         {:error, "Étudiant introuvable pour ce professeur"}
 
-      _student ->
+      student ->
+        # 1. Add exclusion so the student no longer appears in this professor's list
         Ecto.Adapters.SQL.query(
           Repo,
           "INSERT INTO professeur_student_exclusions (professeur_id, etudiant_id, inserted_at, updated_at) VALUES ($1, $2, NOW(), NOW()) ON CONFLICT (professeur_id, etudiant_id) DO NOTHING",
           [professeur_id, etudiant_id]
         )
-        |> case do
-          {:ok, _} -> {:ok, :deleted}
-          {:error, reason} -> {:error, reason}
+
+        # 2. Detach the student's group from the professor's modules (groupes_modules)
+        student = Repo.preload(student, :groupe)
+
+        if student.groupe do
+          # Find all module IDs taught by this professor
+          prof_module_ids =
+            from(e in Backend.Academics.Enseigner,
+              where: e.professeur_id == ^professeur_id,
+              select: e.module_id
+            )
+            |> Repo.all()
+
+          if length(prof_module_ids) > 0 do
+            # Check if other students in the same group still need these modules
+            # (i.e., other students in this group that are NOT excluded for this professor)
+            other_students_in_group =
+              from(e in Etudiant,
+                where: e.groupe_id == ^student.groupe.id and e.id != ^etudiant_id,
+                where:
+                  not fragment(
+                    "EXISTS (SELECT 1 FROM professeur_student_exclusions WHERE professeur_id = ? AND etudiant_id = ?)",
+                    ^professeur_id,
+                    e.id
+                  ),
+                select: e.id
+              )
+              |> Repo.all()
+
+            # Only detach the group-module link if no other active students remain in the group
+            if length(other_students_in_group) == 0 do
+              Enum.each(prof_module_ids, fn module_id ->
+                Ecto.Adapters.SQL.query(
+                  Repo,
+                  "DELETE FROM groupes_modules WHERE groupe_id = $1 AND module_id = $2",
+                  [student.groupe.id, module_id]
+                )
+              end)
+            end
+          end
         end
+        # 3. Delete all grades assigned by this professor for this student
+        from(g in Backend.Academics.Grade,
+          where: g.etudiant_id == ^etudiant_id and g.professeur_id == ^professeur_id
+        )
+        |> Repo.delete_all()
+
+        {:ok, :deleted}
     end
   end
 

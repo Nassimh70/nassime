@@ -54,6 +54,7 @@
           v-model="form.type"
           :options="typeOptions"
           placeholder="Type d'annonce"
+          :disabled="!isAdmin"
         />
         <textarea v-model="form.contenu" placeholder="Contenu de l'annonce*" rows="3" class="col-span-2 resize-none"></textarea>
       </div>
@@ -67,6 +68,7 @@
           </button>
           <button 
             @click="addAnnonce" 
+            :disabled="submitting || !formValid"
             class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
           >
@@ -144,18 +146,6 @@
               </div>
             </div>
           </div>
-          <button
-            v-if="allowReactions"
-            @click="handleVote(annonce.id)"
-            class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all flex-shrink-0"
-            :style="{
-              background: voted.has(annonce.id) ? '#4F5CF5' : '#F3F4FF',
-              color: voted.has(annonce.id) ? '#FFFFFF' : '#4F5CF5',
-            }"
-          >
-            <ThumbsUp class="w-4 h-4" />
-            <span class="text-xs" style="font-weight: 700">{{ voteCounts[annonce.id] }}</span>
-          </button>
         </div>
       </div>
     </div>
@@ -163,32 +153,50 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { Bell, Plus, BookOpen, Calendar, User, ThumbsUp, Lock,Send } from 'lucide-vue-next';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { Bell, Plus, BookOpen, Calendar, User, Lock, Send } from 'lucide-vue-next';
 import CustomSelect from './CustomSelect.vue'
-import { createAnnonce, listAnnonces, invalidateAnnoncesCache, voteAnnonce } from '../composables/useAnnonces'
+import { createAnnonce, listAnnonces, invalidateAnnoncesCache } from '../composables/useAnnonces'
+import { useAuth } from '../composables/useAuth'
 
 // Props pour contrôler qui peut publier et réagir
 const props = defineProps({
-  allowReactions: {
-    type: Boolean,
-    default: false, // Par défaut, pas de réactions
-  },
   canPublish: {
     type: Boolean,
     default: false, // Par défaut, pas de publication
   },
 });
 
-const activeFilter = ref('Toutes');
-const loading = ref(true);
+const { user, isDelegate } = useAuth()
 
-// ─── Type options for the form ───────────────────
-const typeOptions = ref([
-  { value: 'Pédagogique', label: 'Pédagogique' },
-  { value: 'Administrative', label: 'Administrative' },
-  { value: 'Événement', label: 'Événement' },
-])
+const userRoleName = computed(() => {
+  const r = user.value && user.value.role
+  let roleName = ''
+  if (!r) roleName = ''
+  else if (typeof r === 'string') roleName = r
+  else if (r.nom_roles) roleName = r.nom_roles
+  else if (r.name) roleName = r.name
+  return (roleName || '').toString().toLowerCase()
+})
+
+const isAdmin = computed(() => userRoleName.value === 'admin' || userRoleName.value === 'administration')
+const isProfesseur = computed(() => userRoleName.value === 'professeur')
+
+// ─── Type options based on role ───────────────────
+const typeOptions = computed(() => {
+  if (isAdmin.value) {
+    return [
+      { value: 'Pédagogique', label: 'Pédagogique' },
+      { value: 'Administrative', label: 'Administrative' },
+      { value: 'Événement', label: 'Événement' },
+    ]
+  } else if (isProfesseur.value) {
+    return [{ value: 'Pédagogique', label: 'Pédagogique' }]
+  } else if (isDelegate.value) {
+    return [{ value: 'Événement', label: 'Événement' }]
+  }
+  return [{ value: 'Pédagogique', label: 'Pédagogique' }] // fallback
+})
 
 // ─── Filter buttons ──────────────────────────────
 const filterButtons = ref([
@@ -214,7 +222,28 @@ function normalizeType(value) {
 
 onMounted(async () => {
   await loadAnnonces()
+  setDefaultType()
 })
+
+function setDefaultType() {
+  if (isDelegate.value) {
+    form.type = 'Événement'
+  } else if (isProfesseur.value) {
+    form.type = 'Pédagogique'
+  } else if (isAdmin.value) {
+    form.type = 'Administrative'
+  } else {
+    form.type = 'Pédagogique'
+  }
+}
+
+const activeFilter = ref('Toutes');
+const loading = ref(true);
+const submitting = ref(false);
+
+const formValid = computed(() => {
+  return form.titre.trim() && form.contenu.trim() && form.type;
+});
 
 const annonces = ref([])
 
@@ -232,11 +261,6 @@ const roleStyles = {
   'Délégué': { background: '#EDE9FE', color: '#7C3AED' },
   'Étudiant': { background: '#E0F2FE', color: '#0369A1' },
 }
-
-
-
-const voted = ref(new Set());
-const voteCounts = reactive({})
 
 const filteredAnnonces = computed(() => {
   if (activeFilter.value === 'Toutes') {
@@ -259,11 +283,7 @@ async function loadAnnonces() {
         role: a.role_auteur || 'Inconnu',
         cours: a.cours || 'Général',
         type: normalizeType(a.type_annonce) || 'Pédagogique',
-        likes: a.like_annonce || 0,
       }))
-
-      // init vote counts
-      annonces.value.forEach(a => { voteCounts[a.id] = a.likes || 0 })
     }
   } catch (err) {
     console.error('Erreur chargement annonces', err)
@@ -279,12 +299,13 @@ const showForm = ref(false);
 const form = reactive({
   titre: '',
   cours: '',
-  type: 'Pédagogique',
+  type: '',
   contenu: '',
 });
 
 const addAnnonce = async () => {
-  if (!form.titre || !form.contenu) return;
+  if (!formValid.value || submitting.value) return;
+  submitting.value = true;
   try {
     const payload = {
       titre_annonce: form.titre,
@@ -304,14 +325,12 @@ const addAnnonce = async () => {
         role: a.role_auteur || 'Inconnu',
         cours: a.cours || form.cours || 'Général',
         type: normalizeType(a.type_annonce) || form.type,
-        likes: a.like_annonce || 0,
       }
       annonces.value.unshift(item)
-      voteCounts[item.id] = item.likes || 0
       // reset form
       form.titre = '';
       form.cours = '';
-      form.type = 'Pédagogique';
+      setDefaultType();
       form.contenu = '';
       showForm.value = false;
       // invalidate and reload to keep cache consistent
@@ -323,41 +342,10 @@ const addAnnonce = async () => {
     console.error('Erreur création annonce', err)
     const msg = (err && (err.message || err.error)) || 'Impossible de publier l\'annonce'
     alert(msg)
+  } finally {
+    submitting.value = false;
   }
 }
-
-const handleVote = async (id) => {
-  try {
-    const already = voted.value.has(id)
-    const voteType = already ? 'unlike' : 'like'
-    const res = await voteAnnonce(id, voteType)
-
-    if (res && res.data) {
-      voteCounts[id] = res.data.like_annonce || 0
-      if (already) {
-        const newVoted = new Set([...voted.value])
-        newVoted.delete(id)
-        voted.value = newVoted
-      } else {
-        voted.value = new Set([...voted.value, id])
-      }
-      return
-    }
-
-    // fallback optimistic update
-    if (already) {
-      const newVoted = new Set([...voted.value])
-      newVoted.delete(id)
-      voted.value = newVoted
-      voteCounts[id] = Math.max((voteCounts[id] || 0) - 1, 0)
-    } else {
-      voted.value = new Set([...voted.value, id])
-      voteCounts[id] = (voteCounts[id] || 0) + 1
-    }
-  } catch (err) {
-    console.error('Erreur vote annonce', err)
-  }
-};
 
 function typeStyleFor(t) {
   const normalized = normalizeType(t)

@@ -1,5 +1,21 @@
 <template>
   <div class="flex flex-col gap-4">
+    <!-- Toast notification -->
+    <Transition name="toast">
+      <div
+        v-if="toast.show"
+        class="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-sm font-medium"
+        :style="{
+          background: toast.type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)',
+          color: '#fff'
+        }"
+      >
+        <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5" />
+        <AlertCircle v-else class="w-5 h-5" />
+        <span>{{ toast.message }}</span>
+      </div>
+    </Transition>
+
     <!-- Role Summary -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
       <div v-for="[role, cfg] in Object.entries(roleConfig)" :key="role"
@@ -53,11 +69,11 @@
                   <span class="hidden sm:inline">{{ u.role }}</span>
                 </div>
               </div>
-              <div>
+              <div v-if="u.role !== 'Admin'">
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ u.role === 'Professeur' ? 'Grade' : 'Groupe' }}</p>
                 <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ u.role === 'Professeur' ? (u.grade || 'N/A') : (u.filiere || 'N/A') }}</p>
               </div>
-              <div>
+              <div v-if="u.role !== 'Admin' && u.role !== 'Professeur'">
                 <p class="text-xs text-gray-500 dark:text-gray-400">Réclamations</p>
                 <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ u.reclamations }}</p>
               </div>
@@ -69,7 +85,7 @@
                 </span>
               </div>
               <div class="flex items-center justify-end">
-                <button @click="handleDeleteUser(u.id)" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors" title="Supprimer l'utilisateur">
+                <button @click="promptDeleteUser(u.id)" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors" title="Supprimer l'utilisateur">
                   <Trash2 class="w-4 h-4" />
                 </button>
               </div>
@@ -78,15 +94,46 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <Transition name="modal">
+      <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Supprimer l'utilisateur</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm mb-6">Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible et supprimera toutes ses données.</p>
+          <div class="flex gap-3 justify-end">
+            <button
+              @click="showDeleteModal = false; userToDelete = null"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              @click="confirmDelete"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import { onBeforeRouteUpdate } from 'vue-router'
-import { Users, UserCheck, BookOpen, GraduationCap, Search, Trash2 } from 'lucide-vue-next';
+import { Users, UserCheck, BookOpen, GraduationCap, Search, Trash2, CheckCircle, AlertCircle } from 'lucide-vue-next';
 import CustomSelect from '../../../components/CustomSelect.vue'
 import { listUsers, deleteUser } from '../../../composables/useAdmin'
+
+const toast = ref({ show: false, message: '', type: 'success' })
+
+function showToast(message, type = 'success') {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
 
 const avatarColors = ['#4F5CF5', '#818CF8', '#10B981', '#F59E0B', '#EF4444'];
 
@@ -146,15 +193,27 @@ watchEffect(() => {
   }
 })
 
-async function handleDeleteUser(id) {
-  if (confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.")) {
-    try {
-      await deleteUser(id)
-      await loadUsers(true)
-    } catch (e) {
-      console.error('Failed to delete user', e)
-      alert("Erreur lors de la suppression de l'utilisateur.")
-    }
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
+
+function promptDeleteUser(id) {
+  userToDelete.value = id
+  showDeleteModal.value = true
+}
+
+async function confirmDelete() {
+  if (!userToDelete.value) return
+  try {
+    await deleteUser(userToDelete.value)
+    await loadUsers(true)
+    showDeleteModal.value = false
+    userToDelete.value = null
+    showToast("L'utilisateur a été supprimé avec succès.", "error") // error type draws it in red locally
+  } catch (e) {
+    console.error('Failed to delete user', e)
+    showToast("Erreur lors de la suppression de l'utilisateur.", "error")
+    showDeleteModal.value = false
+    userToDelete.value = null
   }
 }
 

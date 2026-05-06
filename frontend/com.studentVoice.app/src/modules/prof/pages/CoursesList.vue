@@ -12,6 +12,17 @@
       </button>
     </div>
 
+    <!-- Messages de succès et d'erreur -->
+    <div v-if="saveError" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-slide-down">
+      <AlertCircle class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <p class="text-red-700 dark:text-red-300 font-medium">{{ saveError }}</p>
+    </div>
+    
+    <div v-if="saveMessage" class="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg animate-slide-down">
+      <CheckCircle class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+      <p class="text-green-700 dark:text-green-300 font-medium">{{ saveMessage }}</p>
+    </div>
+
     <!-- Add Course Form -->
     <div v-if="showAddForm" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5">
       <h3 class="text-sm mb-3 font-bold text-gray-900 dark:text-white">Ajouter un Nouveau Cours</h3>
@@ -25,9 +36,13 @@
               type="text"
               v-model="newCourse.name"
               placeholder="Ex: Mathématiques Avancées"
-              required
-              class="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              class="w-full rounded-lg border bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              :class="errors.name ? 'border-red-500' : 'border-gray-200 dark:border-slate-700'"
             />
+            <p v-if="errors.name" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+              <AlertCircle class="w-3 h-3" />
+              {{ errors.name }}
+            </p>
           </div>
           <div>
             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
@@ -37,32 +52,46 @@
               type="text"
               v-model="newCourse.code"
               placeholder="Ex: MATH-301"
-              required
-              class="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              class="w-full rounded-lg border bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              :class="errors.code ? 'border-red-500' : 'border-gray-200 dark:border-slate-700'"
             />
+            <p v-if="errors.code" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+              <AlertCircle class="w-3 h-3" />
+              {{ errors.code }}
+            </p>
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Semestre
-          </label>
-          <input
-            type="text"
-            v-model="newCourse.semestre"
-            placeholder="Ex: S1"
-            class="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Crédits
-          </label>
-          <input
-            type="number"
-            v-model="newCourse.credits"
-            placeholder="Ex: 3"
-            class="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Semestre
+            </label>
+            <CustomSelect
+              v-model="newCourse.semestre"
+              :options="semesterOptions"
+              placeholder="Choisir le semestre"
+            />
+            <p v-if="errors.semestre" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+              <AlertCircle class="w-3 h-3" />
+              {{ errors.semestre }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Crédits
+            </label>
+            <input
+              type="number"
+              v-model="newCourse.credits"
+              placeholder="Ex: 3"
+              class="w-full rounded-lg border bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              :class="errors.credits ? 'border-red-500' : 'border-gray-200 dark:border-slate-700'"
+            />
+            <p v-if="errors.credits" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+              <AlertCircle class="w-3 h-3" />
+              {{ errors.credits }}
+            </p>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
@@ -76,23 +105,25 @@
           />
         </div>
 
-        <div class="flex gap-3 pt-2">
-          <button
-            type="submit"
-            :disabled="loading"
-            class="px-4 py-2 rounded-xl text-white text-sm transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-            style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
-          >
-            {{ loading ? 'En cours...' : 'Ajouter le cours' }}
-          </button>
+        <div class="flex gap-3 pt-2 justify-end">
           <button
             type="button"
             @click="cancelAddCourse"
-            class="px-4 py-2 rounded-xl text-sm"
-            style="background: #e5e7eb; color: #6b7280; font-weight: 600"
-          >
+            class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+            style="background: rgba(99, 102, 241, 0.08); color: #6366f1">
             Annuler
           </button>
+          <button
+            type="submit"
+            :disabled="loading"
+           class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
+          >
+            <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
+            <Check v-else class="w-4 h-4" />
+            {{ loading ? 'En cours...' : 'Ajouter le cours' }}
+          </button>
+          
         </div>
       </form>
     </div>
@@ -205,22 +236,59 @@
           </div>
 
           <!-- Edit Module Form -->
-          <div v-if="editingModule === course.id" class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1">Semestre</label>
-              <input type="text" v-model="editModuleData.semestre_module" class="w-full rounded-lg border px-3 py-1.5 text-sm dark:bg-slate-700 dark:border-slate-600">
+          <div v-if="editingModule === course.id" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-blue-100 dark:border-blue-900 shadow-md space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Semestre</label>
+                <CustomSelect
+                  v-model="editModuleData.semestre_module"
+                  :options="semesterOptions"
+                  placeholder="Choisir le semestre"
+                />
+                <p v-if="editErrors.semestre" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+                  <AlertCircle class="w-3 h-3" />
+                  {{ editErrors.semestre }}
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Crédits</label>
+                <input 
+                  type="number" 
+                  v-model.number="editModuleData.credits_module" 
+                  class="w-full rounded-lg border bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  :class="editErrors.credits ? 'border-red-500' : 'border-gray-200 dark:border-slate-700'"
+                >
+                <p v-if="editErrors.credits" class="mt-1 text-[11px] text-red-500 flex items-center gap-1">
+                  <AlertCircle class="w-3 h-3" />
+                  {{ editErrors.credits }}
+                </p>
+              </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1">Crédits</label>
-              <input type="number" v-model.number="editModuleData.credits_module" class="w-full rounded-lg border px-3 py-1.5 text-sm dark:bg-slate-700 dark:border-slate-600">
+              <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Description</label>
+              <textarea 
+                v-model="editModuleData.description_module" 
+                rows="3" 
+                class="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm resize-none"
+                placeholder="Description du module..."
+              ></textarea>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1">Description</label>
-              <textarea v-model="editModuleData.description_module" rows="2" class="w-full rounded-lg border px-3 py-1.5 text-sm dark:bg-slate-700 dark:border-slate-600"></textarea>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-              <button @click="cancelEditingModule" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">Annuler</button>
-              <button @click="saveModuleDetails(course)" :disabled="loadingModuleUpdate" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+            <div class="flex justify-end gap-3 pt-2">
+              <button 
+                @click="cancelEditingModule" 
+                class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                style="background: rgba(99, 102, 241, 0.08); color: #6366f1"
+              >
+                Annuler
+              </button>
+              <button 
+                @click="saveModuleDetails(course)" 
+                :disabled="loadingModuleUpdate" 
+                class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
+              >
+                <Loader2 v-if="loadingModuleUpdate" class="w-4 h-4 animate-spin" />
+                <Check v-else class="w-4 h-4" />
                 {{ loadingModuleUpdate ? '...' : 'Enregistrer' }}
               </button>
             </div>
@@ -336,8 +404,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { BookOpen, Users, Calendar, ChevronUp, ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
+import { BookOpen, Users, Calendar, ChevronUp, ChevronDown, Plus, Trash2, Check, AlertCircle, Loader2, CheckCircle } from 'lucide-vue-next'
 import { API_BASE, authHeaders } from '../../../composables/api'
+import CustomSelect from '../../../components/CustomSelect.vue'
 import { 
   professeurModulesProgress, 
   fetchChaptersForModule, 
@@ -352,9 +421,12 @@ const showAddChapterForm = ref(null)
 const showAddForm = ref(false)
 const courseChapters = ref({})
 const loading = ref(false)
+const saveError = ref('')
+const saveMessage = ref('')
 
 const editingModule = ref(null)
 const editModuleData = ref({ description_module: '', semestre_module: '', credits_module: 0 })
+const editErrors = ref({})
 const loadingModuleUpdate = ref(false)
 
 const editingProgress = ref(null)
@@ -374,6 +446,52 @@ const newCourse = ref({
   description: '',
 })
 
+const errors = ref({})
+
+const semesterOptions = [
+  { value: 'S1', label: 'Semestre 1' },
+  { value: 'S2', label: 'Semestre 2' },
+  { value: 'S3', label: 'Semestre 3' },
+  { value: 'S4', label: 'Semestre 4' },
+  { value: 'S5', label: 'Semestre 5' },
+  { value: 'S6', label: 'Semestre 6' },
+]
+
+function validateCourseForm() {
+  errors.value = {}
+  saveError.value = ''
+  
+  if (!newCourse.value.name.trim()) {
+    errors.value.name = 'Le nom du cours est obligatoire'
+  }
+  
+  // Format: Lettres majuscules, un tiret, puis des chiffres
+  const codeRegex = /^[A-Z]+-[0-9]+$/
+  if (!newCourse.value.code.trim()) {
+    errors.value.code = 'Le code du cours est obligatoire'
+  } else if (!codeRegex.test(newCourse.value.code.trim())) {
+    errors.value.code = 'Format invalide (Ex: MATH-1)'
+  }
+  
+  if (!newCourse.value.semestre) {
+    errors.value.semestre = 'Le semestre est obligatoire'
+  }
+  
+  const credits = parseInt(newCourse.value.credits)
+  if (newCourse.value.credits === '') {
+    errors.value.credits = 'Le nombre de crédits est obligatoire'
+  } else if (isNaN(credits) || credits < 1 || credits > 6) {
+    errors.value.credits = 'Entre 1 et 6'
+  }
+  
+  const isValid = Object.keys(errors.value).length === 0
+  if (!isValid) {
+    saveError.value = 'Veuillez corriger les erreurs dans le formulaire'
+  }
+  
+  return isValid
+}
+
 function toggleCourse(courseId) {
   expandedCourse.value = expandedCourse.value === courseId ? null : courseId
   if (expandedCourse.value === courseId) {
@@ -382,15 +500,17 @@ function toggleCourse(courseId) {
 }
 
 async function handleAddCourse() {
-  if (!newCourse.value.name || !newCourse.value.code) return
+  saveError.value = ''
+  saveMessage.value = ''
+  
+  if (!validateCourseForm()) return
 
   loading.value = true
   try {
-    const semestre = (newCourse.value.semestre || '').trim() || 'S1'
     const newCourseObj = {
       intitule_cours: newCourse.value.name,
       code_cours: newCourse.value.code,
-      semestre_module: semestre,
+      semestre_module: newCourse.value.semestre,
       credits_module: parseInt(newCourse.value.credits) || 0,
       description_module: newCourse.value.description,
     }
@@ -417,10 +537,20 @@ async function handleAddCourse() {
           credits_module: data.data.credits_module,
         })
       }
+      saveMessage.value = 'Le cours a été ajouté avec succès !'
       cancelAddCourse()
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        saveMessage.value = ''
+      }, 3000)
+    } else {
+      const errData = await res.json().catch(() => ({}))
+      saveError.value = errData.message || 'Une erreur est survenue lors de l\'ajout du cours'
     }
   } catch (e) {
     console.error('Failed to add course:', e)
+    saveError.value = 'Erreur de connexion au serveur'
   } finally {
     loading.value = false
   }
@@ -428,6 +558,8 @@ async function handleAddCourse() {
 
 function cancelAddCourse() {
   newCourse.value = { name: '', code: '', semestre: '', credits: '', description: '' }
+  errors.value = {}
+  // Note: we don't clear saveError here if it comes from validation
   showAddForm.value = false
 }
 
@@ -519,6 +651,7 @@ async function saveProgress(course) {
 
 function startEditingModule(course) {
   editingModule.value = course.id
+  editErrors.value = {}
   editModuleData.value = {
     description_module: course.description_module || '',
     semestre_module: course.semestre_module || '',
@@ -528,9 +661,29 @@ function startEditingModule(course) {
 
 function cancelEditingModule() {
   editingModule.value = null
+  editErrors.value = {}
+}
+
+function validateEditForm() {
+  editErrors.value = {}
+  
+  if (!editModuleData.value.semestre_module) {
+    editErrors.value.semestre = 'Le semestre est obligatoire'
+  }
+  
+  const credits = parseInt(editModuleData.value.credits_module)
+  if (editModuleData.value.credits_module === '' || editModuleData.value.credits_module === null) {
+    editErrors.value.credits = 'Le nombre de crédits est obligatoire'
+  } else if (isNaN(credits) || credits < 1 || credits > 6) {
+    editErrors.value.credits = 'Entre 1 et 6'
+  }
+  
+  return Object.keys(editErrors.value).length === 0
 }
 
 async function saveModuleDetails(course) {
+  if (!validateEditForm()) return
+
   loadingModuleUpdate.value = true
   try {
     const payload = { progress: editModuleData.value }

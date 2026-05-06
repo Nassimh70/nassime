@@ -106,7 +106,6 @@ defmodule BackendWeb.Router do
     get("/annonces", AnnonceController, :index)
     post("/annonces", AnnonceController, :create)
     get("/annonces/:id", AnnonceController, :show)
-    post("/annonces/:id/vote", AnnonceController, :vote)
 
     get("/souggestions", SouggestionController, :index)
     get("/souggestions/:id", SouggestionController, :show)

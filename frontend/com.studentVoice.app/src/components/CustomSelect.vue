@@ -3,12 +3,14 @@
     <!-- Trigger -->
     <button
       type="button"
-      @click="toggle"
+      @click="!disabled && toggle()"
+      :disabled="disabled"
       class="flex items-center justify-between w-full px-3 py-2 rounded-xl border text-sm transition-all duration-200
              bg-[var(--input)] text-[var(--foreground)] border-[var(--border)]
              hover:border-[var(--ring)] hover:bg-[var(--input-background)]
              focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20
-             focus:border-[var(--ring)]"
+             focus:border-[var(--ring)]
+             disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:border-[var(--border)]"
     >
       <span class="flex items-center gap-2 truncate">
         <component
@@ -25,6 +27,7 @@
       </span>
 
       <ChevronDown
+        v-if="!disabled"
         class="w-4 h-4 transition-transform duration-200 text-[var(--muted-foreground)]"
         :class="isOpen ? 'rotate-180 text-[var(--ring)]' : ''"
       />
@@ -82,7 +85,8 @@ const props = defineProps({
   modelValue: [String, Number],
   options: { type: Array, required: true },
   placeholder: { type: String, default: 'Select...' },
-  icon: { type: [Object, Function], default: null }
+  icon: { type: [Object, Function], default: null },
+  disabled: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue'])

@@ -171,9 +171,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search, Mail, Phone, Plus } from 'lucide-vue-next'
 import { useStudents } from '../../../composables/useStudents'
+import { useGrades } from '../../../composables/useGrades'
 import CustomSelect from '../../../components/CustomSelect.vue'
 
 const { students, fetchProfessorStudents, createProfessorStudent, deleteStudent: removeStudent, searchAllStudents, attachStudentToModule } = useStudents()
+const { grades, fetchGrades } = useGrades()
 
 const searchTerm = ref('')
 const selectedCourse = ref('all')
@@ -196,6 +198,7 @@ const newStudent = ref({
 // Fetch professor's students on component mount
 onMounted(async () => {
   await fetchProfessorStudents()
+  await fetchGrades()
   try {
     const modulesRes = await fetch('http://localhost:4000/api/auth/professeur/modules/progress', {
       headers: {
@@ -227,6 +230,14 @@ const filteredStudents = computed(() => {
     const matchesCourse =
       selectedCourse.value === 'all' || student.course === selectedCourse.value
     return matchesSearch && matchesCourse
+  }).map((student) => {
+    const studentGrades = grades.value.filter(g => g.etudiant_id === student.id || (g.etudiant && g.etudiant.id === student.id))
+    let average = 0
+    if (studentGrades.length > 0) {
+      const sum = studentGrades.reduce((acc, g) => acc + (g.note_td_tp * 0.4 + g.note_examen * 0.6), 0)
+      average = sum / studentGrades.length
+    }
+    return { ...student, average }
   })
 })
 
@@ -259,12 +270,23 @@ async function handleAddStudent() {
       (e && (e.message || e.error || (typeof e === 'string' ? e : ''))) || ''
     errorMessage.value = details.length
       ? `Erreur validation: ${details.join(' | ')}`
-      : backendMessage || 'Impossible d’ajouter l’étudiant.'
+      : backendMessage || "Impossible d'ajouter l'étudiant."
   }
 }
 
 async function deleteStudent(id) {
   errorMessage.value = ''
+
+  const student = students.value.find(s => s.id === id)
+  const studentName = student ? student.name : 'cet étudiant'
+  const studentCourse = student && student.course ? student.course : ''
+
+  const confirmMsg = studentCourse
+    ? `Voulez-vous vraiment supprimer "${studentName}" ?\n\nIl sera détaché du cours "${studentCourse}" et toutes ses notes seront supprimées.`
+    : `Voulez-vous vraiment supprimer "${studentName}" de votre liste ?\n\nToutes ses notes seront également supprimées.`
+
+  if (!confirm(confirmMsg)) return
+
   try {
     await removeStudent(id)
   } catch (e) {
@@ -279,9 +301,10 @@ async function deleteStudent(id) {
       (e && (e.message || e.error || (typeof e === 'string' ? e : ''))) || ''
     errorMessage.value = details.length
       ? `Erreur validation: ${details.join(' | ')}`
-      : backendMessage || 'Impossible de supprimer l’étudiant.'
+      : backendMessage || "Impossible de supprimer l'étudiant."
   }
 }
+
 async function handleSearchStudent() {
   searchResult.value = null
   searchNotFound.value = false

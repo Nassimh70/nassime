@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mb-0.2">
     <!-- Banner -->
     <div
       class="relative px-8 pt-5 pb-4 text-center overflow-hidden"

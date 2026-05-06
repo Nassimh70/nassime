@@ -1,5 +1,5 @@
 <template>
-  <Annonce :allowReactions="true" :canPublish="isDelegate" />
+  <Annonce :canPublish="isDelegate" />
 </template>
 
 <script setup>

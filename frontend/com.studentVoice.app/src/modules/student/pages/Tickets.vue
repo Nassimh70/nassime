@@ -51,9 +51,18 @@
           />
           <textarea v-model="formData.ticketDescription" placeholder="Description détaillée*" rows="3" class="col-span-2 resize-none"></textarea>
       </div>
-      <div class="flex gap-2">
-        <button @click="addTicket" class="px-4 py-2 rounded-xl text-white text-sm transition-all hover:opacity-90 active:scale-95" style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600">Créer</button>
+      <div class="flex gap-2 justify-end">
         <button @click="showForm = false" class="px-4 py-2 rounded-xl text-sm" :style="{ background: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: '600' }">Annuler</button>
+        <button 
+          @click="addTicket" 
+          :disabled="submitting || !formValid"
+          class="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          style="background: linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%); font-weight: 600"
+        >
+          <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+          <Check v-else class="w-4 h-4" />
+          {{ submitting ? 'Création...' : 'Créer' }}
+        </button>
       </div>
       </div>
 
@@ -320,7 +329,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Ticket as TicketIcon, Plus, Search, Clock, AlertCircle, AlertTriangle, CheckCircle, MessageCircleMore, Lock, X, Send, Shield, BookOpen } from 'lucide-vue-next'
+import { Ticket as TicketIcon, Plus, Search, Clock, AlertCircle, AlertTriangle, CheckCircle, MessageCircleMore, Lock, X, Send, Shield, BookOpen, Loader2, Check } from 'lucide-vue-next'
 import { useAuth } from '../../../composables/useAuth'
 import CustomSelect from '../../../components/CustomSelect.vue'
 import { listTickets, createTicket, getTicket, addTicketComment, getTicketComments } from '../../../composables/useTickets'
@@ -335,6 +344,7 @@ const filterStatusTicket = ref('all')
 const selectedTicket = ref(null)
 const showDetails = ref(false)
 const newComment = ref('')
+const submitting = ref(false)
 
 // Form Data
 const formData = ref({
@@ -382,6 +392,20 @@ const moduleOptions = computed(() =>
   }))
 )
 
+const formValid = computed(() => {
+  const hasBasicFields = 
+    formData.value.ticketSubject.trim() && 
+    formData.value.ticketDescription.trim() && 
+    formData.value.ticketCategory && 
+    formData.value.ticketPriority && 
+    formData.value.ticketDestinataire
+
+  if (formData.value.ticketDestinataire === 'professeur') {
+    return hasBasicFields && formData.value.ticketModuleId
+  }
+  return hasBasicFields
+})
+
 const statusFilterOptions = [
   { value: 'all', label: 'Tous les statuts' },
   { value: 'En attente', label: 'En attente', dot: '#3b82f6' },
@@ -394,54 +418,48 @@ const tickets = ref([])
 
 // Ticket Functions
 const addTicket = async () => {
-  // Validate required fields
-  if (!formData.value.ticketDestinataire) {
-    alert('Veuillez sélectionner un destinataire (Administration ou Professeur)')
-    return
-  }
-  if (formData.value.ticketDestinataire === 'professeur' && !formData.value.ticketModuleId) {
-    alert('Veuillez sélectionner le module concerné')
-    return
-  }
-  if (formData.value.ticketSubject && formData.value.ticketDescription && formData.value.ticketCategory && formData.value.ticketPriority) {
-    try {
-      const payload = {
-        object_ticket: formData.value.ticketSubject,
-        description_ticket: formData.value.ticketDescription,
-        categorie_ticket: formData.value.ticketCategory,
-        priorite_ticket: formData.value.ticketPriority,
-        type_ticket: formData.value.ticketDestinataire,
-      }
-      // Attach module_id only when directed to a professor
-      if (formData.value.ticketDestinataire === 'professeur' && formData.value.ticketModuleId) {
-        payload.module_id = formData.value.ticketModuleId
-      }
-      const res = await createTicket({ ticket: payload })
-      if (res && res.data) {
-        const t = res.data
-        tickets.value.unshift({
-          id: t.id,
-          subject: t.object_ticket,
-          description: t.description_ticket,
-          status: normalizeStatus(t.statut_ticket),
-          priority: t.priorite_ticket || 'low',
-          createdAt: t.cree_le_ticket || t.inserted_at,
-          category: t.categorie_ticket || '',
-          type: t.type_ticket || 'administration',
-          comments: []
-        })
-      }
-      formData.value.ticketSubject = ''
-      formData.value.ticketDescription = ''
-      formData.value.ticketCategory = ''
-      formData.value.ticketPriority = ''
-      formData.value.ticketDestinataire = ''
-      formData.value.ticketModuleId = null
-      showForm.value = false
-    } catch (err) {
-      console.error('Erreur création ticket', err)
-      alert('Impossible de créer le ticket')
+  if (!formValid.value || submitting.value) return
+
+  submitting.value = true
+  try {
+    const payload = {
+      object_ticket: formData.value.ticketSubject,
+      description_ticket: formData.value.ticketDescription,
+      categorie_ticket: formData.value.ticketCategory,
+      priorite_ticket: formData.value.ticketPriority,
+      type_ticket: formData.value.ticketDestinataire,
     }
+    // Attach module_id only when directed to a professor
+    if (formData.value.ticketDestinataire === 'professeur' && formData.value.ticketModuleId) {
+      payload.module_id = formData.value.ticketModuleId
+    }
+    const res = await createTicket({ ticket: payload })
+    if (res && res.data) {
+      const t = res.data
+      tickets.value.unshift({
+        id: t.id,
+        subject: t.object_ticket,
+        description: t.description_ticket,
+        status: normalizeStatus(t.statut_ticket),
+        priority: t.priorite_ticket || 'low',
+        createdAt: t.cree_le_ticket || t.inserted_at,
+        category: t.categorie_ticket || '',
+        type: t.type_ticket || 'administration',
+        comments: []
+      })
+    }
+    formData.value.ticketSubject = ''
+    formData.value.ticketDescription = ''
+    formData.value.ticketCategory = ''
+    formData.value.ticketPriority = ''
+    formData.value.ticketDestinataire = ''
+    formData.value.ticketModuleId = null
+    showForm.value = false
+  } catch (err) {
+    console.error('Erreur création ticket', err)
+    alert('Impossible de créer le ticket')
+  } finally {
+    submitting.value = false
   }
 }
 

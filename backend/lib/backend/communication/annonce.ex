@@ -7,7 +7,6 @@ defmodule Backend.Communication.Annonce do
     field(:contenu_annonce, :string)
     field(:date_publication_annonce, :utc_datetime)
     field(:type_annonce, :string, default: "Pédagogique")
-    field(:like_annonce, :integer, default: 0)
 
     belongs_to(:utilisateur, Backend.Accounts.Utilisateur)
 
@@ -22,7 +21,7 @@ defmodule Backend.Communication.Annonce do
       :contenu_annonce,
       :date_publication_annonce,
       :type_annonce,
-      :like_annonce,
+
       :utilisateur_id
     ])
     |> validate_required([:titre_annonce, :contenu_annonce, :utilisateur_id])

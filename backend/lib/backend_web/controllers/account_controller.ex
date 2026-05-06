@@ -74,6 +74,7 @@ defmodule BackendWeb.AccountController do
           email: u.email_utilisateurs,
           role: (u.role && u.role.nom_roles) || "",
           filiere: (u.etudiant && u.etudiant.groupe && u.etudiant.groupe.libele_groupes) || "",
+          grade: (u.professeur && u.professeur.grade_professeurs) || "",
           status: "Actif",
           reclamations: length(u.tickets || []),
           actif: (u.etudiant && u.etudiant.est_delegue_etudiant) || false
@@ -137,7 +138,7 @@ defmodule BackendWeb.AccountController do
 
   def professeur_students(conn, _params) do
     with {:ok, professeur} <- ensure_professeur_profile(conn.assigns.account) do
-      students = 
+      students =
         Accounts.list_students_for_professeur(professeur.id)
         |> Backend.Repo.preload(groupe: [modules: :professeurs])
 
@@ -146,8 +147,9 @@ defmodule BackendWeb.AccountController do
           prof_modules =
             if student.groupe && Ecto.assoc_loaded?(student.groupe.modules) do
               student.groupe.modules
-              |> Enum.filter(fn m -> 
-                Ecto.assoc_loaded?(m.professeurs) and Enum.any?(m.professeurs, &(&1.id == professeur.id)) 
+              |> Enum.filter(fn m ->
+                Ecto.assoc_loaded?(m.professeurs) and
+                  Enum.any?(m.professeurs, &(&1.id == professeur.id))
               end)
               |> Enum.map(& &1.intitule_cours)
               |> Enum.join(", ")
@@ -156,7 +158,10 @@ defmodule BackendWeb.AccountController do
             end
 
           # Fallback to group name if no module found
-          course_display = if prof_modules != "", do: prof_modules, else: (student.groupe && student.groupe.libele_groupes) || ""
+          course_display =
+            if prof_modules != "",
+              do: prof_modules,
+              else: (student.groupe && student.groupe.libele_groupes) || ""
 
           %{
             id: student.id,
@@ -209,7 +214,8 @@ defmodule BackendWeb.AccountController do
                     )
                   )
                 else
-                  {:error, "Cet étudiant existe déjà. Veuillez utiliser la barre de recherche 'Ajouter un Étudiant Existant' pour le rattacher à votre module."}
+                  {:error,
+                   "Cet étudiant existe déjà. Veuillez utiliser la barre de recherche 'Ajouter un Étudiant Existant' pour le rattacher à votre module."}
                 end
             end
         end

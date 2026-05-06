@@ -102,26 +102,7 @@ defmodule Backend.Communication do
     Annonce.changeset(annonce, attrs)
   end
 
-  def vote_annonce(%Annonce{} = annonce, vote_type) do
-    vote = String.downcase(to_string(vote_type || ""))
 
-    attrs =
-      case vote do
-        "like" ->
-          %{"like_annonce" => (annonce.like_annonce || 0) + 1}
-
-        "unlike" ->
-          %{"like_annonce" => max((annonce.like_annonce || 0) - 1, 0)}
-
-        _ ->
-          :invalid
-      end
-
-    case attrs do
-      :invalid -> {:error, "Type de vote invalide"}
-      _ -> update_annonce(annonce, attrs)
-    end
-  end
 
   alias Backend.Communication.Souggestion
 

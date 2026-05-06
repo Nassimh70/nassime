@@ -91,6 +91,18 @@ defmodule BackendWeb.TicketController do
       |> Map.put("utilisateur_id", current.id)
 
     with {:ok, %Commentaire{} = commentaire} <- Support.create_commentaire(params) do
+      if current.id != ticket.utilisateur_id do
+        Support.create_notification(%{
+          "type_notifications" => "nouveau_commentaire",
+          "message_notifications" => "Vous avez reçu une nouvelle réponse sur votre ticket #{ticket.referance_ticket}.",
+          "cree_le_notifications" => DateTime.utc_now(),
+          "lien_notifications" => "/api/auth/tickets/#{ticket.id}",
+          "ticket_id" => ticket.id,
+          "utilisateur_id" => ticket.utilisateur_id,
+          "pour_tous" => false
+        })
+      end
+
       commentaire = Repo.preload(commentaire, :utilisateur)
       json(conn, %{data: commentaire_payload(commentaire)})
     end
@@ -190,8 +202,9 @@ defmodule BackendWeb.TicketController do
           Ticket
           |> where([t], t.module_id in ^module_ids and t.type_ticket == "professeur")
           |> Repo.all()
+          |> Repo.preload([:module, :utilisateur, [commentaires: :utilisateur], :notifications])
 
-        json(conn, %{data: Enum.map(tickets, &ticket_payload/1)})
+        json(conn, %{data: Enum.map(tickets, fn t -> ticket_payload(t, true) end)})
       else
         {:error, "Profil professeur introuvable"}
       end
@@ -218,6 +231,24 @@ defmodule BackendWeb.TicketController do
       inserted_at: ticket.inserted_at,
       updated_at: ticket.updated_at
     }
+
+    base =
+      if Enum.any?(ticket.__struct__.__schema__(:associations), &(&1 == :module)) && Ecto.assoc_loaded?(ticket.module) && ticket.module do
+        Map.put(base, :module, %{
+          id: ticket.module.id,
+          code_cours: ticket.module.code_cours,
+          intitule_cours: ticket.module.intitule_cours
+        })
+      else
+        base
+      end
+
+    base =
+      if Enum.any?(ticket.__struct__.__schema__(:associations), &(&1 == :utilisateur)) && Ecto.assoc_loaded?(ticket.utilisateur) && ticket.utilisateur do
+        Map.put(base, :expediteur, "#{ticket.utilisateur.prenom_utilisateurs} #{ticket.utilisateur.nom_utilisateurs}")
+      else
+        base
+      end
 
     if include_relations do
       base

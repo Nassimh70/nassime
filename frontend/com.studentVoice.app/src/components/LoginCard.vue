@@ -74,37 +74,35 @@ const frontElement = ref()
 const backElement = ref()
 let resizeObserver = null
 
-const getActiveHeight = () => {
-  if (flipped.value && backElement.value) {
-    return backElement.value.offsetHeight
-  }
-  if (!flipped.value && frontElement.value) {
-    return frontElement.value.offsetHeight
-  }
-  return frontElement.value?.offsetHeight || backElement.value?.offsetHeight || 0
-}
+let lastActiveHeight = 0
+let lastAvailableHeight = 0
 
-const updateCardScale = () => {
-  const activeHeight = getActiveHeight()
-  if (!activeHeight) {
+const measure = () => {
+  let activeH = 0
+  if (!flipped.value && frontElement.value) {
+    activeH = frontElement.value.offsetHeight
+  }
+  if (flipped.value && backElement.value) {
+    activeH = backElement.value.offsetHeight
+  }
+
+  if (!activeH) {
     cardScale.value = 1
     return
   }
 
-  const availableHeight = Math.max(window.innerHeight - 32, 320)
-  const nextScale = Math.min(1, availableHeight / activeHeight)
-  cardScale.value = Math.max(0.68, nextScale)
-}
-
-const measure = () => {
-  if (!flipped.value && frontElement.value) {
-    cardHeight.value = frontElement.value.offsetHeight
+  const availableH = Math.max(window.innerHeight - 32, 320)
+  
+  // Pour éviter la boucle infinie (vibration) causée par les petits changements
+  // de hauteur du texte lorsqu'on applique le 'zoom', on ignore les changements mineurs.
+  if (Math.abs(activeH - lastActiveHeight) > 15 || Math.abs(availableH - lastAvailableHeight) > 5 || cardHeight.value === undefined) {
+    lastActiveHeight = activeH
+    lastAvailableHeight = availableH
+    
+    cardHeight.value = activeH
+    const nextScale = Math.min(1, availableH / activeH)
+    cardScale.value = Math.max(0.68, nextScale)
   }
-  if (flipped.value && backElement.value) {
-    cardHeight.value = backElement.value.offsetHeight
-  }
-
-  updateCardScale()
 }
 
 const flipToBack = () => {

@@ -73,7 +73,6 @@
               <MessageSquare class="w-7 h-7 text-gray-300" />
             </div>
             <p class="text-sm text-gray-400 font-medium">Pas encore de commentaires</p>
-            <p class="text-xs text-gray-300 mt-1">Soyez le premier à répondre</p>
           </div>
 
           <div v-else class="space-y-1">

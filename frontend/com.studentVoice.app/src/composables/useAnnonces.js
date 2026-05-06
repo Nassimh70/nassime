@@ -47,10 +47,4 @@ export async function deleteAnnonce(id) {
   })
 }
 
-export async function voteAnnonce(id, vote) {
-  return await request(`/api/auth/annonces/${id}/vote`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ vote }),
-  })
-}
+

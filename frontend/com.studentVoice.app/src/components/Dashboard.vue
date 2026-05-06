@@ -132,43 +132,43 @@
       <!-- Status Pie Chart -->
       <div class="bg-white rounded-2xl p-6 border border-gray-200">
         <div class="text-center mb-6">
-          <h2 class="text-xl font-bold text-gray-900">Statut des Réclamations</h2>
-          <p class="text-sm text-gray-500 mt-1">Suivez les réclamations par statut</p>
+          <h2 class="text-xl font-bold text-gray-900">Statistiques des Réclamations</h2>
+          <p class="text-sm text-gray-500 mt-1">États de traitement</p>
         </div>
 
         <div class="flex flex-col items-center mb-4">
-          <div class="px-4 py-2 bg-gray-50 rounded-full border border-gray-100 flex items-center gap-2 shadow-sm">
-            <span class="text-xs text-gray-500 uppercase tracking-widest font-bold">Total</span>
-            <span class="text-xl font-black text-blue-600">{{ totalComplaints }}</span>
+          <div class="px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-2 shadow-sm">
+            <span class="text-xs text-indigo-700 uppercase tracking-widest font-bold">Total Réclamations</span>
+            <span class="text-xl font-black text-indigo-600">{{ totalComplaints }}</span>
           </div>
         </div>
 
         <div class="flex items-center justify-center mb-8 relative h-[220px]">
           <svg width="200" height="200" viewBox="0 0 200 200" class="transform -rotate-90">
             <defs>
-              <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color: var(--blue-dark); stop-opacity:1" />
-                <stop offset="50%" style="stop-color: var(--blue); stop-opacity:1" />
-                <stop offset="100%" style="stop-color: var(--blue-deep); stop-opacity:1" />
+              <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color: #22c55e; stop-opacity:1" />
+                <stop offset="100%" style="stop-color: #16a34a; stop-opacity:1" />
               </linearGradient>
               <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color: #c41e1e; stop-opacity:1" />
-                <stop offset="50%" style="stop-color: #DC2626; stop-opacity:1" />
-                <stop offset="100%" style="stop-color: #a51b1b; stop-opacity:1" />
+                <stop offset="0%" style="stop-color: #ef4444; stop-opacity:1" />
+                <stop offset="100%" style="stop-color: #dc2626; stop-opacity:1" />
               </linearGradient>
             </defs>
-            <circle cx="100" cy="100" r="85" fill="none" stroke="#e5e7eb" stroke-width="12" />
-            <circle cx="100" cy="100" r="70" fill="none" stroke="#e5e7eb" stroke-width="12" />
-            <circle cx="100" cy="100" r="55" fill="none" stroke="#e5e7eb" stroke-width="12" />
+            <!-- Background circles -->
+            <circle cx="100" cy="100" r="85" fill="none" stroke="#f3f4f6" stroke-width="12" />
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#f3f4f6" stroke-width="12" />
+            
+            <!-- Data circles -->
             <circle
               cx="100"
               cy="100"
               r="85"
               fill="none"
-              stroke="url(#blueGradient)"
+              stroke="url(#greenGradient)"
               stroke-width="12"
-              :stroke-dasharray="circumference"
-              :stroke-dashoffset="circumference - (complaintsByStatus[0].percentage / 100) * circumference"
+              stroke-dasharray="534"
+              :stroke-dashoffset="getDashOffset(85, getTicketPercentage('Accept', 'Résolu'))"
               stroke-linecap="round"
             />
             <circle
@@ -178,43 +178,37 @@
               fill="none"
               stroke="url(#redGradient)"
               stroke-width="12"
-              :stroke-dasharray="circumference"
-              :stroke-dashoffset="circumference - (complaintsByStatus[1].percentage / 100) * circumference"
-              stroke-linecap="round"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="55"
-              fill="none"
-              stroke="#e5e7eb"
-              stroke-width="12"
-              :stroke-dasharray="circumference"
-              :stroke-dashoffset="circumference - (complaintsByStatus[2].percentage / 100) * circumference"
+              stroke-dasharray="440"
+              :stroke-dashoffset="getDashOffset(70, getTicketPercentage('Refus', 'Rejet'))"
               stroke-linecap="round"
             />
           </svg>
 
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold">
-              +5,33%
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold mb-1">
+              {{ getTicketPercentage('Accept', 'Résolu') }}% Acc.
+            </span>
+            <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[10px] font-semibold">
+              {{ getTicketPercentage('Refus', 'Rejet') }}% Ref.
             </span>
           </div>
         </div>
 
-        <!-- Legend -->
-        <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-6">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
-            <span class="text-sm text-gray-600">{{ complaintsByStatus[0].status }}</span>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="text-sm font-medium text-gray-900">Acceptés / Résolus</span>
+            </div>
+            <span class="text-lg font-bold text-gray-900">{{ getTicketCount('Accept', 'Résolu') }}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-red-500"></span>
-            <span class="text-sm text-gray-600">{{ complaintsByStatus[1].status }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-gray-300"></span>
-            <span class="text-sm text-gray-600">{{ complaintsByStatus[2].status }}</span>
+          
+          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+              <span class="text-sm font-medium text-gray-900">Refusés / Rejetés</span>
+            </div>
+            <span class="text-lg font-bold text-gray-900">{{ getTicketCount('Refus', 'Rejet') }}</span>
           </div>
         </div>
       </div>
@@ -282,6 +276,7 @@ async function loadData() {
       const ticketsRes = await listTickets()
       if (ticketsRes && ticketsRes.data) {
         const tickets = ticketsRes.data
+        complaints.value = tickets
         
         // Count total tickets
         const totalCount = tickets.length
@@ -343,6 +338,29 @@ async function loadData() {
   } catch (err) {
     console.error('Failed to load dashboard data', err)
   }
+}
+
+const complaints = ref([])
+
+function getTicketCount(...statusList) {
+  if (!complaints.value) return 0
+  return complaints.value.filter(t => {
+    const s = (t.statut_ticket || '').toLowerCase()
+    return statusList.some(status => s.includes(status.toLowerCase()))
+  }).length
+}
+
+function getTicketPercentage(...statusList) {
+  if (!complaints.value) return 0
+  const total = complaints.value.length
+  if (total === 0) return 0
+  const count = getTicketCount(...statusList)
+  return Math.round((count / total) * 100)
+}
+
+function getDashOffset(radius, percentage) {
+  const circumference = 2 * Math.PI * radius
+  return circumference - (percentage / 100) * circumference
 }
 
 onMounted(() => {

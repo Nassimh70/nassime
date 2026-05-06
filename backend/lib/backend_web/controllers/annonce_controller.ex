@@ -86,14 +86,7 @@ defmodule BackendWeb.AnnonceController do
     end
   end
 
-  def vote(conn, %{"id" => id, "vote" => vote_type}) do
-    annonce = Communication.get_annonce!(id)
 
-    with {:ok, %Annonce{} = updated} <- Communication.vote_annonce(annonce, vote_type) do
-      updated = Repo.preload(updated, utilisateur: :role)
-      json(conn, %{data: annonce_payload(updated)})
-    end
-  end
 
   defp annonce_payload(annonce) do
     %{
@@ -101,7 +94,7 @@ defmodule BackendWeb.AnnonceController do
       titre_annonce: annonce.titre_annonce,
       contenu_annonce: annonce.contenu_annonce,
       type_annonce: annonce.type_annonce || "Pédagogique",
-      like_annonce: annonce.like_annonce || 0,
+
       date_publication_annonce: annonce.date_publication_annonce,
       utilisateur_id: annonce.utilisateur_id,
       auteur: get_auteur_name(annonce.utilisateur),

@@ -95,18 +95,28 @@ phys_module =
       })
     )
 
-# Create groupe if it doesn't exist
-groupe =
-  Repo.get_by(Backend.Academics.Groupe, code_groupes: "L1-MATH-001") ||
+# Create INFO3 groups if they don't exist
+info3_groups = [
+  %{code_groupes: "INFO3-A1", libele_groupes: "A1"},
+  %{code_groupes: "INFO3-A2", libele_groupes: "A2"},
+  %{code_groupes: "INFO3-A3", libele_groupes: "A3"},
+  %{code_groupes: "INFO3-A4", libele_groupes: "A4"}
+]
+
+Enum.each(info3_groups, fn group_attrs ->
+  Repo.get_by(Backend.Academics.Groupe, code_groupes: group_attrs.code_groupes) ||
     Repo.insert!(
       Backend.Academics.Groupe.changeset(%Backend.Academics.Groupe{}, %{
-        libele_groupes: "L1-MATH",
-        code_groupes: "L1-MATH-001",
+        code_groupes: group_attrs.code_groupes,
+        libele_groupes: group_attrs.libele_groupes,
         annee_academique_groupes: "2025-2026",
-        filier_groupe: "Mathématiques",
-        niveau_groupe: "Licence 1"
+        filier_groupe: "Informatique",
+        niveau_groupe: "Licence 3"
       })
     )
+end)
+
+  student_group = Repo.get_by(Backend.Academics.Groupe, code_groupes: "INFO3-A1")
 
 # Create test students
 student_data = [
@@ -133,7 +143,7 @@ students =
             %{
               telephone_etudiant: data.phone,
               date_naissance_etudiant: Date.new!(2005, 1, 1),
-              groupe_id: groupe.id
+              groupe_id: student_group.id
             },
             user.id
           )
