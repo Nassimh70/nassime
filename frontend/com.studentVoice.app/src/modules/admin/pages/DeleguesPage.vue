@@ -50,9 +50,8 @@
     <!-- Formulaire -->
       <div v-if="showForm" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5 animate-slide-down">
         <h3 class="text-lg font-semibold text-slate-800 dark:text-white mb-4">Désigner un délégué existant</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input v-model="searchQuery.nom" placeholder="Nom ou prénom" />
-          <input v-model="searchQuery.email" placeholder="Email (optionnel)" />
+        <div class="grid grid-cols-1 gap-4 mb-4">
+          <input v-model="searchQuery.query" placeholder="Nom ou email" />
         </div>
         <div class="flex gap-3 justify-end mt-2">
           <button @click="showForm = false" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Annuler</button>
@@ -275,7 +274,7 @@ onBeforeRouteUpdate((to, from) => {
 
 const showForm = ref(false);
 const form = reactive({ nom: '', filiere: '', annee: '', email: '', telephone: '', date_naissance: '' });
-const searchQuery = reactive({ nom: '', email: '' })
+const searchQuery = reactive({ query: '' })
 const searchResults = ref([])
 const searching = ref(false)
 const searched = ref(false)
@@ -295,7 +294,7 @@ const confirmDelete = async () => {
     try {
       await designateDelegate(deletingDelegueId.value, { delegue: false });
       delegues.value = delegues.value.filter(d => d.id !== deletingDelegueId.value);
-      showToast('Statut de délégué révoké avec succès !')
+      showToast('Statut de délégué révoqué avec succès !')
     } catch (e) {
       console.error('Erreur lors de la révocation du délégué', e);
       if (handleAuthError(e)) return;
@@ -322,6 +321,20 @@ const toggle = async (id) => {
   const d = delegues.value.find(d => d.id === id);
   if (!d) return;
   const newStatus = !d.actif
+  
+  if (newStatus && d.filiere) {
+    const existingActiveDelegate = delegues.value.find(other => 
+      other.actif === true && 
+      other.filiere === d.filiere && 
+      other.id !== d.id
+    );
+
+    if (existingActiveDelegate) {
+      showToast(`Le groupe ${d.filiere} possède déjà un délégué actif (${existingActiveDelegate.nom}).`, 'error');
+      return;
+    }
+  }
+
   try {
     await designateDelegate(id, { delegue: newStatus })
     d.actif = newStatus
@@ -381,21 +394,19 @@ const search = async () => {
     const arr = (res && res.data) ? res.data : []
     console.debug('[DeleguesPage] listUsers response ->', arr)
 
-    const qNom = (searchQuery.nom || '').toLowerCase().trim()
-    const qEmail = (searchQuery.email || '').toLowerCase().trim()
+    const q = (searchQuery.query || '').toLowerCase().trim()
 
     const filtered = arr.filter(u => {
       const fullname = ((u.nom || '') + ' ' + (u.prenom_utilisateurs || '')).toLowerCase()
       const email = (u.email || u.email_utilisateurs || '').toLowerCase()
-      const matchesNom = qNom ? fullname.includes(qNom) || (u.prenom_utilisateurs || '').toLowerCase().includes(qNom) : true
-      const matchesEmail = qEmail ? email.includes(qEmail) : true
+      const matchesQuery = q ? fullname.includes(q) || (u.prenom_utilisateurs || '').toLowerCase().includes(q) || email.includes(q) : true
       
       // Filter to only show students (etudiant), exclude professors (prof)
       const roleRaw = (u.role && (u.role.nom_roles || u.role)) || ''
       const roleNormalized = roleRaw.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
       const isStudent = roleNormalized.includes('etudiant') || (!roleNormalized.includes('prof') && !roleNormalized.includes('enseignant'))
       
-      return matchesNom && matchesEmail && isStudent
+      return matchesQuery && isStudent
     })
 
     searchResults.value = filtered
@@ -410,6 +421,19 @@ const search = async () => {
 }
 
 const designateExisting = async (user) => {
+  if (user.filiere) {
+    const existingActiveDelegate = delegues.value.find(d => 
+      d.actif === true && 
+      d.filiere === user.filiere && 
+      d.id !== user.id
+    );
+
+    if (existingActiveDelegate) {
+      showToast(`Le groupe ${user.filiere} possède déjà un délégué actif (${existingActiveDelegate.nom}).`, 'error');
+      return;
+    }
+  }
+
   try {
     // Use utilisateur id (backend DelegationController accepts utilisateur id)
     console.debug('[designateExisting] calling designateDelegate with id, payload ->', user.id, { delegue: true })

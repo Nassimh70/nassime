@@ -22,7 +22,7 @@
     <!-- Ticket Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
       <div
-        v-for="r in filtered"
+        v-for="r in sortedFiltered"
         :key="r.id"
         @click="openDetail(r)"
         class="group relative bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 flex flex-col h-full cursor-pointer hover:border-blue-300 dark:hover:border-blue-600/50"
@@ -307,6 +307,14 @@ const pendingAction = ref(null);
 const filtered = computed(() =>
   filter.value === 'Toutes' ? reclamations.value : reclamations.value.filter(r => r.status === filter.value)
 );
+
+const sortedFiltered = computed(() => {
+  return [...filtered.value].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Plus récent en premier
+  });
+});
 
 const chips = computed(() => [
   { label: 'Total', value: reclamations.value.length, color: '#255fe3', bg: '#DEE2F0', gradient: 'linear-gradient(135deg, #1f54d2 0%, #255fe3 50%, #1d3f95 100%)', shadow: '0 2px 8px rgba(37,95,227,0.35)', filter: 'Toutes', icon: CheckCircle },

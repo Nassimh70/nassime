@@ -64,13 +64,35 @@ const contactItems = [
 ];
 
 const faqs = [
-  { q: 'Comment soumettre une réclamation ?', a: 'Rendez-vous dans la section "Réclamations", cliquez sur "Nouvelle" et remplissez le formulaire avec les détails de votre problème. Votre délégué sera automatiquement notifié.' },
-  { q: "Quel est le délai de traitement d'une réclamation ?", a: "Le délai standard de traitement est de 5 à 7 jours ouvrables. Les réclamations urgentes peuvent être traitées sous 48h selon leur nature." },
-  { q: "Comment suivre l'état de ma réclamation ?", a: 'Dans la section "Réclamations", vous pouvez filtrer par statut (En attente, Acceptée, Refusée) pour suivre l\'avancement de vos dossiers.' },
-  { q: 'Qui peut soumettre un ticket ?', a: 'Les délégués et les professeurs peuvent soumettre des tickets liés à leurs cours respectifs. Les tickets apparaissent dans la section "Tickets".' },
-  { q: 'Comment devenir délégué ?', a: "Les délégués sont désignés par l'administration après une élection au niveau de chaque promotion. Contactez votre responsable pédagogique pour plus d'informations." },
-  { q: 'Comment voter pour une suggestion ?', a: 'Dans la section "Annonces", les suggestions soumises par les délégués affichent un bouton de vote. Cliquez dessus pour soutenir la proposition.' },
-];
+  {
+    q: 'Comment accéder à la plateforme ?',
+    a: "Tous les utilisateurs (étudiants, délégués, professeurs et administrateurs) doivent s'authentifier pour accéder à la plateforme. Utilisez vos identifiants fournis par l'administration. Une fois connecté, vous pouvez consulter et mettre à jour votre profil depuis la section \"Mon Profil\"."
+  },
+  {
+    q: 'Comment soumettre une réclamation ?',
+    a: "En tant qu'étudiant ou délégué, rendez-vous dans la section \"Réclamations\" et remplissez le formulaire de soumission. Une fois envoyée, votre réclamation sera traitée par l'administration qui pourra l'accepter ou la refuser avec un motif de décision."
+  },
+  {
+    q: 'Comment suivre le statut de mes réclamations ?',
+    a: "Depuis la section \"Réclamations\", vous pouvez consulter le statut de chacun de vos dossiers (En attente, Acceptée, Refusée). Les administrateurs, professeurs et délégués ont également accès à une vue des réclamations avec statistiques détaillées."
+  },
+  {
+    q: 'Comment soumettre et voter pour une suggestion ?',
+    a: "Les étudiants peuvent soumettre une suggestion depuis la section dédiée. Tous les utilisateurs peuvent ensuite voter pour les suggestions soumises afin de soutenir les propositions qu'ils jugent pertinentes."
+  },
+  {
+    q: 'Comment sont publiées les annonces ?',
+    a: "Les annonces peuvent être publiées par les administrateurs et les professeurs. Il existe deux types d'annonces : les annonces administratives (publiées uniquement par l'administrateur) et les annonces pédagogiques (publiées par l'administrateur ou le professeur). Tous les utilisateurs peuvent les consulter depuis la section \"Annonces\"."
+  },
+  {
+    q: "Comment suivre l'avancement des cours ?",
+    a: "Les étudiants peuvent consulter l'avancement des modules depuis leur espace. Les professeurs ont la possibilité de mettre à jour l'avancement du cours en temps réel et peuvent également consulter et gérer les tickets liés à leurs cours."
+  },
+  {
+    q: 'Quel est le rôle du délégué sur la plateforme ?',
+    a: "Le délégué est désigné par l'administrateur. Il peut soumettre des réclamations au nom de sa promotion, rédiger et soumettre des tickets, soumettre des suggestions, et voter pour les propositions. Il a aussi accès au statut des réclamations de sa promotion."
+  },
+]
 </script>
 
 <style scoped>

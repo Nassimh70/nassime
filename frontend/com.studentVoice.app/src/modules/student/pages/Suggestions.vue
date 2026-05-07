@@ -355,6 +355,7 @@ onMounted(async () => {
         likes: s.like_souggestion || 0,
         dislikes: s.dislike_souggestion || 0,
         userVote: s.user_vote, // 'like', 'dislike', or null
+        dateRaw: s.inserted_at || null,
         date: s.inserted_at,
         category: s.category || 'Général',
       }))
@@ -389,6 +390,7 @@ const addSuggestion = async () => {
         likes: s.like_souggestion || 0,
         dislikes: s.dislike_souggestion || 0,
         userVote: s.user_vote || null,
+        dateRaw: s.inserted_at || new Date().toISOString(),
         date: s.inserted_at,
         category: s.category || formData.value.category,
       })
@@ -470,8 +472,12 @@ const filteredSuggestions = computed(() => {
     )
   }
 
-  // Sort by votes descending
-  return list.sort((a, b) => (b.likes + b.dislikes) - (a.likes + a.dislikes))
+  // Sort by date
+  return list.sort((a, b) => {
+    const dateA = new Date(a.dateRaw || a.date || 0).getTime()
+    const dateB = new Date(b.dateRaw || b.date || 0).getTime()
+    return dateB - dateA
+  })
 })
 
 const suggestionStats = computed(() => [

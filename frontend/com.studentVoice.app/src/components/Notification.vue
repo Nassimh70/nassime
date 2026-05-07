@@ -74,6 +74,10 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Bell, FileText, CheckCircle, Ticket, AlertTriangle, User, Lightbulb, Megaphone } from 'lucide-vue-next'
 import { getNotifications } from '../composables/useNotifications'
+import { useAuth } from '../composables/useAuth'
+
+// Get user role
+const { user } = useAuth()
 
 // ─── État ───────────────────────────────────────────────
 const isOpen = ref(false)
@@ -109,8 +113,22 @@ function humanizeTime(dateString) {
 async function loadNotifications() {
   try {
     const res = await getNotifications()
-    const list = (res && res.data) || []
+    let list = (res && res.data) || []
     
+    // Get user role
+    const userRole = user.value && user.value.role
+    const roleLower = (userRole || '').toString().toLowerCase()
+    
+    // Filter out suggestion notifications for professors and admins
+    if (roleLower === 'professeur' || roleLower === 'admin' || roleLower === 'administrateur') {
+      list = list.filter(n => {
+        const type = (n.type_notifications || '').toLowerCase()
+        return type !== 'nouvelle_souggestion' && type !== 'nouvelle_suggestion'
+      })
+    }
+
+    list = list.filter(n => (n.type_notifications || '').toLowerCase() !== 'decision_ticket_broadcast')
+
     // Récupérer les identifiants des notifications déjà lues depuis localStorage
     const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]')
 
@@ -180,9 +198,19 @@ function handleOutsideClick(e) {
 onMounted(() => {
   document.addEventListener('click', handleOutsideClick)
   loadNotifications()
+  
   // Poll notifications every 15 seconds
   const interval = setInterval(loadNotifications, 15000)
-  onBeforeUnmount(() => clearInterval(interval))
+  
+  // Listen for refresh event from tickets page
+  window.addEventListener('refresh-notifications', () => {
+    loadNotifications()
+  })
+  
+  onBeforeUnmount(() => {
+    clearInterval(interval)
+    window.removeEventListener('refresh-notifications', loadNotifications)
+  })
 })
 onBeforeUnmount(() => document.removeEventListener('click', handleOutsideClick))
 </script>

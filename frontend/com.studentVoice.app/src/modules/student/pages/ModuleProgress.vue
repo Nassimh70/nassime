@@ -64,8 +64,7 @@
                 </span>
               </div>
               <p class="text-sm text-gray-600 mb-2">{{ module.professor }}</p>
-              <p class="text-sm text-indigo-600">Prochain cours: {{ module.nextClass }}</p>
-            </div>
+              </div>
 
             <div class="flex items-center gap-3">
               <button

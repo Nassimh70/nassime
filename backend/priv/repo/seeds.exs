@@ -147,7 +147,6 @@ students =
             },
             user.id
           )
-
         IO.puts("Student created: #{data.email}")
         etudiant
 

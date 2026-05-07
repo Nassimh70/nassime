@@ -263,10 +263,15 @@ const roleStyles = {
 }
 
 const filteredAnnonces = computed(() => {
-  if (activeFilter.value === 'Toutes') {
-    return annonces.value;
-  }
-  return annonces.value.filter(a => normalizeType(a.type) === activeFilter.value);
+  let list = activeFilter.value === 'Toutes'
+    ? [...annonces.value]
+    : annonces.value.filter(a => normalizeType(a.type) === activeFilter.value)
+
+  return list.sort((a, b) => {
+    const dateA = new Date(a.dateRaw || a.date || 0).getTime()
+    const dateB = new Date(b.dateRaw || b.date || 0).getTime()
+    return dateB - dateA
+  })
 });
 
 async function loadAnnonces() {
@@ -278,6 +283,7 @@ async function loadAnnonces() {
         id: a.id,
         titre: a.titre_annonce,
         contenu: a.contenu_annonce,
+        dateRaw: a.date_publication_annonce || a.inserted_at || null,
         date: a.date_publication_annonce ? new Date(a.date_publication_annonce).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
         auteur: a.auteur || 'Inconnu',
         role: a.role_auteur || 'Inconnu',
@@ -320,6 +326,7 @@ const addAnnonce = async () => {
         id: a.id,
         titre: a.titre_annonce,
         contenu: a.contenu_annonce,
+        dateRaw: a.date_publication_annonce || a.inserted_at || new Date().toISOString(),
         date: a.date_publication_annonce ? new Date(a.date_publication_annonce).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
         auteur: a.auteur || 'Inconnu',
         role: a.role_auteur || 'Inconnu',

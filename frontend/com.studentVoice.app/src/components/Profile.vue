@@ -71,7 +71,7 @@
               </div>
             </template>
             <!-- Étudiant: Groupe + Département -->
-            <template v-else-if="!user?.administration">
+            <template v-else-if="!isAdmin">
               <div class="flex items-center gap-3 text-sm">
                 <BookOpen class="w-5 h-5 text-gray-400" />
                 <div>
@@ -160,7 +160,7 @@
         </template>
 
         <!-- ========== ÉTUDIANT ========== -->
-        <template v-else-if="!user?.administration">
+        <template v-else-if="!isAdmin">
           <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5 animate-slide-down">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Informations personnelles</h3>
 
@@ -235,7 +235,7 @@
         </template>
 
         <!-- ========== ADMINISTRATEUR ========== -->
-        <template v-else-if="user?.administration">
+        <template v-else-if="isAdmin">
           <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-blue-900 shadow-lg shadow-blue-500/5 animate-slide-down">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Informations personnelles</h3>
 
@@ -291,7 +291,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 import { User, Mail, Phone, MapPin, Calendar, BookOpen, Edit2, Save, X, Star, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
@@ -305,6 +305,18 @@ const isSaving = ref(false)
 const saveMessage = ref('')
 const saveError = ref('')
 const errors = ref({})
+
+const userRoleName = computed(() => {
+  const r = user.value && user.value.role
+  let roleName = ''
+  if (!r) roleName = ''
+  else if (typeof r === 'string') roleName = r
+  else if (r.nom_roles) roleName = r.nom_roles
+  else if (r.name) roleName = r.name
+  return (roleName || '').toString().toLowerCase()
+})
+
+const isAdmin = computed(() => userRoleName.value === 'admin' || userRoleName.value === 'administration')
 
 const formData = ref({
   firstName: '',

@@ -138,7 +138,7 @@
     <!-- Ticket Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
       <div
-        v-for="ticket in tickets"
+        v-for="ticket in sortedTickets"
         :key="ticket.id"
         @click="openTicket(ticket.id)"
         class="group relative bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 flex flex-col h-full cursor-pointer hover:border-blue-300 dark:hover:border-blue-600/50"
@@ -253,6 +253,14 @@ const roleColors = {
   'Délégué': '#818CF8',
   'Professeur': '#F59E0B',
 };
+
+const sortedTickets = computed(() => {
+  return [...tickets.value].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Plus récent en premier
+  });
+});
 
 const stats = computed(() => [
   { label: 'Total Tickets', value: tickets.value.length, color: '#4F5CF5', bg: 'rgba(79, 92, 245, 0.1)', icon: TicketIcon },

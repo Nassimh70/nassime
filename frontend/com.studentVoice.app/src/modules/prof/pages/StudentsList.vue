@@ -1,5 +1,21 @@
 <template>
   <div class="space-y-6">
+    <!-- Toast notification -->
+    <Transition name="toast">
+      <div
+        v-if="toast.show"
+        class="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-sm font-medium"
+        :style="{
+          background: toast.type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)',
+          color: '#fff'
+        }"
+      >
+        <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5" />
+        <AlertCircle v-else class="w-5 h-5" />
+        <span>{{ toast.message }}</span>
+      </div>
+    </Transition>
+
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
@@ -16,7 +32,7 @@
           <input
             type="text"
             v-model="searchStudentEmail"
-            placeholder="Rechercher par email..."
+            placeholder="Rechercher par email ou nom..."
             class="flex-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
           />
           <button
@@ -35,12 +51,11 @@
           </p>
           <div class="flex flex-col gap-2">
             <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Sélectionner le module :</label>
-            <select v-model="selectedAttachModuleId" class="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-white">
-              <option disabled value="">Choisissez un module</option>
-              <option v-for="mod in profModules" :key="mod.id" :value="mod.id">
-                {{ mod.code_cours }} - {{ mod.intitule_cours }}
-              </option>
-            </select>
+            <CustomSelect
+              v-model="selectedAttachModuleId"
+              :options="profModulesOptions"
+              placeholder="Choisissez un module"
+            />
           </div>
           <button
             type="button"
@@ -149,7 +164,7 @@
               </td>
               <td class="px-6 py-4">
                 <button 
-                  @click="deleteStudent(student.id)"
+                  @click="confirmDeleteStudent(student.id)"
                   class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:bg-gray-300 transition-colors"
                   style="background: linear-gradient(135deg, #c41e1e 0%, #DC2626 50%, #a51b1b 100%)">
                   Supprimer
@@ -164,12 +179,36 @@
         <p class="text-gray-500">Aucun étudiant trouvé</p>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <Transition name="modal">
+      <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Supprimer l'étudiant</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm mb-6">Êtes-vous sûr de vouloir supprimer cet étudiant de votre module ? Cette action est irréversible.</p>
+          <div class="flex gap-3 justify-end">
+            <button
+              @click="showDeleteModal = false"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              @click="executeDelete"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Mail, Phone, Plus } from 'lucide-vue-next'
+import { Search, Mail, Phone, Plus, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import { useStudents } from '../../../composables/useStudents'
 import { useGrades } from '../../../composables/useGrades'
 import CustomSelect from '../../../components/CustomSelect.vue'
@@ -188,6 +227,44 @@ const searchLoading = ref(false)
 const attachLoading = ref(false)
 const profModules = ref([])
 const selectedAttachModuleId = ref('')
+const profModulesOptions = computed(() => {
+  return profModules.value.map(mod => ({
+    value: mod.id,
+    label: `${mod.code_cours} - ${mod.intitule_cours}`
+  }))
+})
+
+// Toast
+const toast = ref({ show: false, message: '', type: 'success' })
+function showToast(message, type = 'success') {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
+// Delete Modal state
+const showDeleteModal = ref(false)
+const studentToDelete = ref(null)
+
+function confirmDeleteStudent(id) {
+  studentToDelete.value = id
+  showDeleteModal.value = true
+}
+
+async function executeDelete() {
+  if (studentToDelete.value) {
+    try {
+      await removeStudent(studentToDelete.value)
+      showToast('Étudiant supprimé avec succès !', 'success')
+      await fetchProfessorStudents()
+    } catch (e) {
+      console.error(e)
+      showToast('Erreur lors de la suppression de l\'étudiant.', 'error')
+    }
+  }
+  showDeleteModal.value = false
+  studentToDelete.value = null
+}
+
 const newStudent = ref({
   name: '',
   email: '',
@@ -358,3 +435,34 @@ function getAverageColor(average) {
   return 'text-red-600 bg-red-100';
 }
 </script>
+
+<style scoped>
+/* Toast transition */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.9);
+}
+
+/* Modal transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active .bg-white,
+.modal-leave-active .bg-white {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-enter-from .bg-white,
+.modal-leave-to .bg-white {
+  transform: scale(0.95) translateY(10px);
+}
+</style>

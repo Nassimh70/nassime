@@ -328,7 +328,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { Ticket as TicketIcon, Plus, Search, Clock, AlertCircle, AlertTriangle, CheckCircle, MessageCircleMore, Lock, X, Send, Shield, BookOpen, Loader2, Check } from 'lucide-vue-next'
 import { useAuth } from '../../../composables/useAuth'
 import CustomSelect from '../../../components/CustomSelect.vue'
@@ -345,6 +345,8 @@ const selectedTicket = ref(null)
 const showDetails = ref(false)
 const newComment = ref('')
 const submitting = ref(false)
+let pollInterval = null
+let previousTicketsState = new Map()
 
 // Form Data
 const formData = ref({
@@ -377,13 +379,32 @@ const destinataireOptions = [
   { value: 'professeur', label: 'Professeur', icon: BookOpen, dot: '#14b8a6' },
 ]
 
-const categoryOptions = ref([
-  { value: 'Infrastructure', label: 'Infrastructure', dot: '#f59e0b', gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' },
-  { value: 'Formation', label: 'Module', dot: '#10b981', gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)' },
-  { value: 'Vie étudiante', label: 'Vie étudiante', dot: '#ec4899', gradient: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #be185d 100%)' },
-  { value: 'Services', label: 'Services', dot: '#8b5cf6', gradient: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #6d28d9 100%)' },
+// Réclamations destinées aux professeurs
+const teacherCategoryOptions = ref([
+  { value: 'Module', label: 'Module', dot: '#10b981', gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)' },
+  { value: 'Examens', label: 'Examens', dot: '#f59e0b', gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' },
+  { value: 'Absence', label: 'Absence', dot: '#ef4444', gradient: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #b91c1c 100%)' },
+  { value: 'Comportement', label: 'Comportement', dot: '#ec4899', gradient: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #be185d 100%)' },
+  { value: 'Communication', label: 'Communication', dot: '#3b82f6', gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%)' },
   { value: 'Général', label: 'Général', dot: '#64748b', gradient: 'linear-gradient(135deg, #475569 0%, #64748b 50%, #334155 100%)' },
 ])
+
+// Réclamations destinées à l'administration
+const administrationCategoryOptions = ref([
+  { value: 'Infrastructure', label: 'Infrastructure', dot: '#f59e0b', gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' },
+  { value: 'Scolarité', label: 'Scolarité', dot: '#10b981', gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)' },
+  { value: 'Services', label: 'Services', dot: '#8b5cf6', gradient: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #6d28d9 100%)' },
+  { value: 'Vie étudiante', label: 'Vie étudiante', dot: '#ec4899', gradient: 'linear-gradient(135deg, #db2777 0%, #ec4899 50%, #be185d 100%)' },
+  { value: 'Paiement', label: 'Paiement', dot: '#ef4444', gradient: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #b91c1c 100%)' },
+  { value: 'Plateforme', label: 'Plateforme', dot: '#3b82f6', gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%)' },
+  { value: 'Général', label: 'Général', dot: '#64748b', gradient: 'linear-gradient(135deg, #475569 0%, #64748b 50%, #334155 100%)' },
+])
+
+const categoryOptions = computed(() =>
+  formData.value.ticketDestinataire === 'professeur' 
+    ? teacherCategoryOptions.value 
+    : administrationCategoryOptions.value
+)
 
 const moduleOptions = computed(() =>
   modules.value.map(m => ({
@@ -646,15 +667,20 @@ function normalizeStatus(rawStatus) {
 }
 
 // Filtered Results
-const filteredTicketsData = computed(() =>
-  tickets.value.filter((ticket) => {
+const filteredTicketsData = computed(() => {
+  const filtered = tickets.value.filter((ticket) => {
     const matchesStatus = filterStatusTicket.value === 'all' || normalizeStatus(ticket.status) === filterStatusTicket.value
     const matchesSearch =
       ticket.subject.toLowerCase().includes(searchTermTicket.value.toLowerCase()) ||
       ticket.description.toLowerCase().includes(searchTermTicket.value.toLowerCase())
     return matchesStatus && matchesSearch
   })
-)
+  return [...filtered].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA; // Plus récent en premier
+  });
+})
 
 function isTicketLocked(ticket) {
   if (!ticket) return false

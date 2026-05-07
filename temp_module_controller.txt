@@ -93,25 +93,15 @@ defmodule BackendWeb.ModuleController do
 
       data =
         Enum.map(rows, fn row ->
-            students_count =
-              from(e in Backend.Accounts.Etudiant,
-                join: g in Backend.Academics.Groupe, on: g.id == e.groupe_id,
-                join: gm in "groupes_modules", on: gm.groupe_id == g.id,
-                where: gm.module_id == ^row.module.id,
-                select: count(e.id)
-              )
-              |> Repo.one() || 0
-
-            %{
-              assignment_id: row.id,
-              module: module_payload(row.module),
-              annee_academique_enseigner: row.annee_academique_enseigner,
-              semestre_enseigner: row.semestre_enseigner,
-              date_debut_enseigner: row.date_debut_enseigner,
-              date_fin_enseigner: row.date_fin_enseigner,
-              students_count: students_count,
-              avancement_pourcentage: row.module.avancement_pourcentage || 0
-            }
+          %{
+            assignment_id: row.id,
+            module: module_payload(row.module),
+            annee_academique_enseigner: row.annee_academique_enseigner,
+            semestre_enseigner: row.semestre_enseigner,
+            date_debut_enseigner: row.date_debut_enseigner,
+            date_fin_enseigner: row.date_fin_enseigner,
+            avancement_pourcentage: row.module.avancement_pourcentage || 0
+          }
         end)
 
       json(conn, %{data: data})
@@ -201,3 +191,4 @@ defmodule BackendWeb.ModuleController do
   end
 
 end
+
