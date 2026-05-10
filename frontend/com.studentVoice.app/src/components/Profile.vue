@@ -131,14 +131,13 @@
               <!-- Email -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input v-if="isEditing" type="email" v-model="formData.email" class="w-full px-4 py-2 border rounded-lg" :class="errors.email ? 'border-red-500' : 'border-gray-300'" />
+                <input v-if="isEditing" type="email" v-model="formData.email" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" />
                 <div v-else class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
                   <Mail class="w-5 h-5 text-gray-400" />
                   <span class="text-gray-900">{{ formData.email }}</span>
                 </div>
-                <p v-if="isEditing && errors.email" class="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle class="w-4 h-4" />
-                  {{ errors.email }}
+                <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
+                  L'email ne peut pas être modifié depuis le profil.
                 </p>
               </div>
 
@@ -196,14 +195,13 @@
               <!-- Email -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input v-if="isEditing" type="email" v-model="formData.email" class="w-full px-4 py-2 border rounded-lg" :class="errors.email ? 'border-red-500' : 'border-gray-300'" />
+                <input v-if="isEditing" type="email" v-model="formData.email" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" />
                 <div v-else class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
                   <Mail class="w-5 h-5 text-gray-400" />
                   <span class="text-gray-900">{{ formData.email }}</span>
                 </div>
-                <p v-if="isEditing && errors.email" class="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle class="w-4 h-4" />
-                  {{ errors.email }}
+                <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
+                  L'email ne peut pas être modifié depuis le profil.
                 </p>
               </div>
 
@@ -271,14 +269,13 @@
               <!-- Email -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input v-if="isEditing" type="email" v-model="formData.email" class="w-full px-4 py-2 border rounded-lg" :class="errors.email ? 'border-red-500' : 'border-gray-300'" />
+                <input v-if="isEditing" type="email" v-model="formData.email" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" />
                 <div v-else class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
                   <Mail class="w-5 h-5 text-gray-400" />
                   <span class="text-gray-900">{{ formData.email }}</span>
                 </div>
-                <p v-if="isEditing && errors.email" class="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle class="w-4 h-4" />
-                  {{ errors.email }}
+                <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
+                  L'email ne peut pas être modifié depuis le profil.
                 </p>
               </div>
             </div>
@@ -390,7 +387,10 @@ const validateForm = () => {
     errors.value.email = 'L\'email est obligatoire'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
     errors.value.email = 'L\'email n\'est pas valide'
-  } else if (!formData.value.email.endsWith('@univ-bejaia.dz')) {
+  } else if (!user.value?.professeur && !isAdmin.value && !formData.value.email.endsWith('@se.univ-bejaia.dz')) {
+    // Student must use se.univ-bejaia.dz
+    errors.value.email = 'L\'email étudiant doit être au domaine se.univ-bejaia.dz'
+  } else if ((user.value?.professeur || isAdmin.value) && !formData.value.email.endsWith('@univ-bejaia.dz')) {
     errors.value.email = 'L\'email doit être de l\'université (univ-bejaia.dz)'
   }
   
@@ -434,7 +434,7 @@ const handleSave = async () => {
       id: user.value?.id,
       prenom_utilisateurs: formData.value.firstName,
       nom_utilisateurs: formData.value.lastName,
-      email_utilisateurs: formData.value.email,
+      email_utilisateurs: user.value?.email || formData.value.email,
     }
 
     if (user.value?.professeur) {

@@ -312,7 +312,11 @@ const handleSubmit = async () => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.value || !emailRegex.test(email.value)) throw new Error("Une adresse email valide est requise.")
-    if (!email.value.endsWith('univ-bejaia.dz')) throw new Error("Utilisez l'adresse universitaire (univ-bejaia.dz).")
+    if (selectedRole === 'etudiant') {
+      if (!email.value.endsWith('@se.univ-bejaia.dz')) throw new Error("L'email étudiant doit être au domaine se.univ-bejaia.dz")
+    } else if (selectedRole === 'enseignant') {
+      if (!email.value.endsWith('@univ-bejaia.dz')) throw new Error("L'email enseignant doit être au domaine univ-bejaia.dz")
+    }
     
     // Password validation: minimum 8 characters
     if (!password.value || password.value.length < 8) {
